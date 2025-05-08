@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<!-- Set lang and dir dynamically with JS -->
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ATS Resume Builder</title>
+
+    <!-- The dexie Js -->
+    <script src="./sources/dexie.js" defer></script>
+
+
+    <!-- The Config File -->
+    <script src="/js/config.js" defer></script>    
+    <!-- The Translation File -->
+    <script src="/js/translation.js" defer></script>
+     <!-- Load dexieAPI file -->
+     <script src="/js/dexieApi.js" defer></script>      
+    <!-- The AiAPI File -->
+    <script src="/js/aiAPI.js" defer></script>
+    <!-- The Theme and Langauge Switching File -->
+    <script src="/js/themeAndLanguage.js" defer></script>
+
+
+    <script src="./sources/tabler.min.js" defer></script>
+    <link rel="stylesheet" href="./sources/tabler.min.css">
+    <link rel="stylesheet" href="./sources/tabler-icons.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="Gemini.css">
+
+
+
+
+    <!-- Load Settings -->
+     <script src="/js/settings.js" defer></script> 
+
+     <!-- Load MainJs -->
+      <script src="/js/main.js" defer></script>
+
+
+</head>
+<body>
+
+
+    <div class="page">
+        
+        <!-- Navbar -->
+        <header class="navbar navbar-expand-md navbar-light d-print-none ">
+          <div class="container-xl">
+              <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar-menu">
+                  <span class="navbar-toggler-icon"></span>
+              </button>
+
+
+            <!-- BEGIN NAVBAR LOGO -->
+            <div class="navbar-brand navbar-brand-autodark d-none-navbar-horizontal pe-0 pe-md-3">
+              <a href="./">
+                               <!-- Placeholder Logo -->
+                               <img class="navbar-brand-image" width="40%" height="40%" src="./img/logo.png"></img>
+                              </a>
+            </div>
+            <!-- END NAVBAR LOGO -->
+
+
+              <div class="collapse navbar-collapse" id="navbar-menu">
+                  <div class="d-flex flex-column flex-md-row flex-fill align-items-stretch align-items-md-center">
+                    <!-- BEGIN NAVBAR MENU -->
+                    <ul class="navbar-nav">
+                      <li class="nav-item">
+                        <a class="nav-link" href="./">
+                          <span class="nav-link-icon d-md-none d-lg-inline-block">
+                            <!-- Download SVG icon from http://tabler.io/icons/icon/home -->
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1">
+                              <path d="M5 12l-2 0l9 -9l9 9l-2 0"></path>
+                              <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7"></path>
+                              <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6"></path>
+                            </svg>
+                          </span>
+                          <span class="nav-link-title" data-translate="menu_home"> Home </span>
+                        </a>
+                      </li>
+                      <li class="nav-item">
+                          <a class="nav-link" href="/MyApplications.html">
+                            <span class="nav-link-icon d-md-none d-lg-inline-block">
+                              <!-- Download SVG icon from http://tabler.io/icons/icon/checkbox -->
+                              <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-file-text" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" /><line x1="9" y1="9" x2="10" y2="9" /><line x1="9" y1="13" x2="15" y2="13" /><line x1="9" y1="17" x2="15" y2="17" /></svg>
+                            </span>
+                            <span class="nav-link-title" data-translate="menu_myresumes"> My Resumes / Application </span>
+                          </a>
+                        </li>
+                        <li class="nav-item">
+                          <a class="nav-link" href="./ResumeBuilder.html">
+                            <span class="nav-link-icon d-md-none d-lg-inline-block">
+                              <!-- Download SVG icon from http://tabler.io/icons/icon/checkbox -->
+                              <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-file-text-ai"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M10 21h-3a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v3.5" /><path d="M9 9h1" /><path d="M9 13h2.5" /><path d="M9 17h1" /><path d="M14 21v-4a2 2 0 1 1 4 0v4" /><path d="M14 19h4" /><path d="M21 15v6" /></svg>
+                            </span>
+                            <span class="nav-link-title" data-translate="menu_Ai_Builder"> Ai Resume Builder </span>
+                          </a>
+                        </li>
+                        <li class="nav-item">
+                          <a class="nav-link" href="./AiCoverLetter.html">
+                            <span class="nav-link-icon d-md-none d-lg-inline-block">
+                              <!-- Download SVG icon from http://tabler.io/icons/icon/checkbox -->
+                              <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-script"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M17 20h-11a3 3 0 0 1 0 -6h11a3 3 0 0 0 0 6h1a3 3 0 0 0 3 -3v-11a2 2 0 0 0 -2 -2h-10a2 2 0 0 0 -2 2v8" /></svg>
+                            </span>
+                            <span class="nav-link-title" data-translate="menu_cover_letter"> Ai Cover Letter </span>
+                          </a>
+                        </li>
+                        <li class="nav-item">
+                          <a class="nav-link" href="./AiJobTrainer.html">
+                            <span class="nav-link-icon d-md-none d-lg-inline-block">
+                              <!-- Download SVG icon from http://tabler.io/icons/icon/checkbox -->
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1">
+                          <path d="M9 11l3 3l8 -8"></path>
+                          <path d="M20 12v6a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h9"></path></svg>
+                            </span>
+                            <span class="nav-link-title" data-translate="menu_parser"> Ai Job Trainer </span>
+                          </a>
+                        </li>
+                        <li class="nav-item active">
+                          <a class="nav-link" href="/Settings.html">
+                            <span class="nav-link-icon d-md-none d-lg-inline-block">
+                              <!-- Download SVG icon from http://tabler.io/icons/icon/checkbox -->
+                              <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-settings"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z" /><path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" /></svg>
+                            </span>
+                            <span class="nav-link-title" data-translate="menu_settings"> Settings </span>
+                          </a>
+                        </li>
+                    </ul>
+                    <!-- END NAVBAR MENU -->
+                  </div>
+
+
+
+              <div class="navbar-nav flex-row order-md-last">
+                  <div class="nav-item">
+                      <a  id="dark_mode" class="nav-link px-0 hide-theme-dark" data-bs-toggle="tooltip" data-bs-placement="bottom" aria-label="Enable dark mode" data-bs-original-title="Enable dark mode">
+                        <!-- Download SVG icon from http://tabler.io/icons/icon/moon -->
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1">
+                          <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z"></path>
+                        </svg>
+                      </a>
+                      <a id="light_mode" class="nav-link px-0 hide-theme-light" data-bs-toggle="tooltip" data-bs-placement="bottom" aria-label="Enable light mode" data-bs-original-title="Enable light mode">
+                        <!-- Download SVG icon from http://tabler.io/icons/icon/sun -->
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1">
+                          <path d="M12 12m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0"></path>
+                          <path d="M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7"></path>
+                        </svg>
+                      </a>
+                    </div>
+
+                  <!-- Add other navbar items like User profile if needed -->
+                  <div class="nav-item dropdown">
+                      <a href="#" class="nav-link d-flex lh-1 text-reset p-0" data-bs-toggle="dropdown" aria-label="Open language menu">
+                         <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-language" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 5h7" /><path d="M9 3v2c0 4.418 -2.239 8 -5 8" /><path d="M5 9c-.003 2.144 2.952 3.908 6.7 4" /><path d="M12 20l4 -9l4 9" /><path d="M19.1 18h-6.2" /></svg>
+                      </a>
+                      <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
+                        <a href="#" class="dropdown-item lang-switch" data-lang="en">English</a>
+                        <a href="#" class="dropdown-item lang-switch" data-lang="ar">العربية (Arabic)</a>
+                      </div>
+                    </div>
+              </div>
+
+
+              <div class="collapse navbar-collapse" id="navbar-menu">
+                  <!-- Optional Navbar Links -->
+              </div>
+
+
+          </div>
+      </header>
+        
+
+
+        <!-- Page Body -->
+        <div class="page-wrapper">
+          <div class="page-body">
+              <div class="container-xl">
+                  <div class="row g-5">
+                    <div class="col-sm-2">
+                      <div class="sticky-top topdown">
+                        <h3 data-translate="settings_menu_title">Menu</h3>
+                        <nav class="nav nav-vertical nav-pills" id="pills">
+                          <a class="nav-link" href="#pills-Personal-Info" data-translate="settings_pill_personal_info">Personal Information</a>
+                          <a class="nav-link" href="#pills-Ai-Settings" data-translate="settings_pill_ai_settings">Ai API Key Settings</a>
+                          <a class="nav-link" href="#pills-Import" data-translate="settings_pill_import">Import Data</a>
+                          <a class="nav-link" href="#pills-Export" data-translate="settings_pill_export">Export Data</a>
+                          <a class="nav-link" href="#pills-Delete" data-translate="settings_pill_delete">Delete Data</a>
+                        </nav>
+                      </div>
+                    </div>
+                    <div class="col-sm" data-bs-spy="scroll" data-bs-target="#pills" data-bs-offset="0">
+                        <div class="row row-cards">
+
+                          <div class="col-12" id = "pills-Personal-Info" >
+                            <form class="card" >
+                              <div class="card-body">
+                                <h3 class="card-title" data-translate="settings_personal_info_title">Personal Information</h3>
+                                <div class="row row-cards">
+                                  <div class="col-sm-6 col-md-6">
+                                    <div class="mb-3">
+                                      <label class="form-label" data-translate="settings_label_first_name">First Name</label>
+                                      <input type="text" class="form-control" id="setting-first-name" placeholder="First Name"> <!-- Placeholder might need translation key too if desired -->
+                                    </div>
+                                  </div>
+                                  <div class="col-sm-6 col-md-6">
+                                    <div class="mb-3">
+                                      <label class="form-label" data-translate="settings_label_last_name">Last Name</label>
+                                      <input type="text" class="form-control" id="setting-last-name" placeholder="Last Name">
+                                    </div>
+                                  </div>
+                                  <div class="col-md-12">
+                                    <div class="mb-3">
+                                      <label class="form-label" data-translate="settings_label_select_photo">Select Your Photo</label>
+                                      <div class="mb-3 input-group mb-2">
+                                        <input class="form-control" type="file" id="input-photo" accept="image/*"> <!-- Updated accept -->
+                                        <button class="btn btn-primary" type="button" data-translate="settings_button_save_photo">Save Photo</button> <!-- Removed btn-6 active -->
+                                      </div>
+                                      <div id="photo-preview-container" class="mt-2 text-center" style="display: none;">
+                                         <img src="#" id="profile-photo-preview" alt="Photo Preview">
+                                         <button type="button" id="remove-photo-btn" class="btn btn-sm btn-outline-danger" data-translate="button_remove_photo" style="display:none;">Remove Photo</button> <!-- Added style display none -->
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div class="col-sm-6 col-md-4">
+                                    <div class="mb-3">
+                                      <label class="form-label" data-translate="settings_label_address">Address</label>
+                                      <input type="text" class="form-control" id="setting-address" placeholder="Address here">
+                                    </div>
+                                  </div>
+                                  <div class="col-sm-6 col-md-3">
+                                    <div class="mb-3">
+                                      <label class="form-label" data-translate="settings_label_phone">Phone Number</label>
+                                      <input type="tel" class="form-control" id="setting-phone" placeholder="Phone Number here"> <!-- Changed type to tel -->
+                                    </div>
+                                  </div>
+                                  <div class="col-md-5">
+                                      <div class="mb-3">
+                                        <label class="form-label" data-translate="settings_label_email">Email address</label>
+                                        <input type="email" class="form-control" id="setting-email" placeholder="Email">
+                                      </div>
+                                  </div>
+                                </div>
+                              </div>
+                              <div class="card-footer text-end">
+                                <button type="button" class="btn btn-primary" id="update-profile-btn" data-translate="settings_button_update_profile">Update Profile</button> <!-- Added ID, changed type -->
+                              </div>
+                            </form>
+                          </div>
+
+                          <div class="col-12" id = "pills-Ai-Settings">
+                            <div class="card" >
+                              <div class="card-header">
+                                <h3 class="card-title" data-translate="settings_ai_settings_title">Ai API Key</h3>
+                              </div>
+                              <div class="card-body">
+                                <div class="row row-cards">
+                                  <div class="mb-3 col-sm-4 col-md-2">
+                                    <label class="form-label required" data-translate="settings_label_select_model">Select Model</label>
+                                    <select class="form-select">
+                                      <option value="gemini-1.5-flash">GEMINI 1.5 Flash</option> <!-- Updated name -->
+                                      <!-- Add other models if available -->
+                                    </select>
+                                  </div>
+                                  <div class="mb-3 col-sm-8 col-md-10">
+                                    <label class="form-label required" data-translate="settings_label_api_key">Gemini API Key</label>
+                                    <input id="gemini-api-key" name="url" type="password" class="form-control" data-translate="settings_api_key_placeholder" placeholder="paste your api key here" value="">
+                                  </div>
+                                  
+                                </div>
+                              </div>
+                              <div class="card-footer">
+                                <div class="row align-items-center">
+                                  <div class="col">If you do not know how to get your Gemini API Key please click <a href="#pills-Ai-Settings">Learn More</a> <span id="api-key-status" class="text-muted ms-2"></span></div>
+                                    <div class="col-auto">
+                                        <button id="save-api-key-btn" type="button" class="btn btn-primary" data-translate="settings_button_save_api_key">Save API Key</button>
+                                    </div>
+                                </div>
+                            </div>
+                            </div>
+                          </div>
+
+                          <div class="col-12" id = "pills-Import">
+                            <div class="card">
+                              <div class="card-header">
+                                <h3 class="card-title" data-translate="settings_import_title">Import Data</h3>
+                              </div>
+                              <div class="card-body">
+                                <div class="mb-3">
+                                  <label class="form-label" data-translate="settings_label_select_data_file">Select Data File</label>
+                                  <div class="mb-3 input-group mb-2" >
+                                    <input class="form-control" type="file" id="import-file-input" accept=".json"> <!-- Added ID, accept json -->
+                                    <button class="btn btn-primary" type="button" id="import-data-btn" data-translate="settings_button_import_data">Import Data</button> <!-- Added ID -->
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                         </div>
+
+                          <div class="col-12" id = "pills-Export">
+                            <div class="card">
+                              <div class="card-header">
+                                <h3 class="card-title" data-translate="settings_export_title">Export Data</h3>
+                              </div>
+                              <div class="card-body">
+                                <div class="mb-3">
+                                  <label class="form-label" data-translate="settings_label_insert_file_name">Insert File Name</label>
+                                  <div class="mb-3 input-group mb-2" >
+                                    <input type="text" class="form-control" id="export-file-name" data-translate="settings_placeholder_file_name" placeholder="Insert file name here"> <!-- Added ID -->
+                                    <button class="btn btn-primary" type="button" id="export-data-btn" data-translate="settings_button_export_data">Export Data File</button> <!-- Added ID -->
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div class="col-12" id = "pills-Delete">
+                            <div class="card">
+                              <div class="card-header">
+                                <h3 class="card-title" data-translate="settings_delete_title">Delete Data</h3>
+                              </div>
+                              <div class="card-body">
+                                <h3 class="card-title" data-translate="settings_delete_warning_title">Important Deleting Data</h3>
+                                <p class="card-subtitle" data-translate="settings_delete_warning_text">
+                                  By clicking Delete Data button...
+                                </p>
+                                <label class="form-check">
+                                  <input class="form-check-input" type="checkbox" id="delete-confirm-checkbox"> <!-- Added ID -->
+                                  <span class="form-check-label" data-translate="settings_delete_confirm_checkbox"> I understand that I will permanently delete my data. </span>
+                                </label>
+                              </div>
+                              <div class="card-footer">
+                                <div class="row align-items-center">
+                                  <div class="col" data-translate="settings_delete_footer_note">The Deleted Data Cannot be Recovered <a href="#pills-Delete" data-translate="settings_delete_footer_link">Read More</a></div>
+                                  <div class="col-auto">
+                                    <button type="button" class="btn btn-danger" id="delete-data-btn" data-translate="settings_button_delete_data" disabled> Delete </button> <!-- Added ID, disabled initially -->
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                        </div>
+                    </div>
+                  </div>
+                </div>
+           </div>
+       </div>
+
+
+
+
+
+
+
+    </div>
+
+
+
+</body>
+</html>

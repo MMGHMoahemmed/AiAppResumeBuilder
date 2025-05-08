@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<!-- Set lang and dir dynamically with JS -->
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-translate="myapplications_page_title">My Applications</title>
+
+    <!-- The dexie Js -->
+    <script src="./sources/dexie.js" defer></script>
+
+
+    <!-- The Config File -->
+    <script src="/js/config.js" defer></script>    
+    <!-- The Translation File -->
+    <script src="/js/translation.js" defer></script>
+    <!-- Load dexieAPI file -->
+    <script src="/js/dexieApi.js" defer></script>    
+    <!-- The AiAPI File -->
+    <script src="/js/aiAPI.js" defer></script>
+    <!-- The Theme and Langauge Switching File -->
+    <script src="/js/themeAndLanguage.js" defer></script>
+    
+    
+
+    <script src="./sources/tabler.min.js" defer></script>
+    <link rel="stylesheet" href="./sources/tabler.min.css">
+    <link rel="stylesheet" href="./sources/tabler-icons.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="Gemini.css">
+
+
+     <!-- Load MyResumes -->
+     <script src="/js/myApplications.js" defer></script>    
+
+     <!-- Load MainJs -->
+     <script src="/js/main.js" defer></script>
+
+</head>
+<body>
+    <div class="page">
+        
+        <!-- Navbar -->
+        <header class="navbar navbar-expand-md navbar-light d-print-none ">
+          <div class="container-xl">
+              <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar-menu">
+                  <span class="navbar-toggler-icon"></span>
+              </button>
+
+
+            <!-- BEGIN NAVBAR LOGO -->
+            <div class="navbar-brand navbar-brand-autodark d-none-navbar-horizontal pe-0 pe-md-3">
+              <a href="./">
+                               <!-- Placeholder Logo -->
+                               <img class="navbar-brand-image" width="40%" height="40%" src="./img/logo.png"></img>
+                              </a>
+            </div>
+            <!-- END NAVBAR LOGO -->
+
+
+              <div class="collapse navbar-collapse" id="navbar-menu">
+                  <div class="d-flex flex-column flex-md-row flex-fill align-items-stretch align-items-md-center">
+                    <!-- BEGIN NAVBAR MENU -->
+                    <ul class="navbar-nav">
+                      <li class="nav-item">
+                        <a class="nav-link" href="./">
+                          <span class="nav-link-icon d-md-none d-lg-inline-block">
+                            <!-- Download SVG icon from http://tabler.io/icons/icon/home -->
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1">
+                              <path d="M5 12l-2 0l9 -9l9 9l-2 0"></path>
+                              <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7"></path>
+                              <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6"></path>
+                            </svg>
+                          </span>
+                          <span class="nav-link-title" data-translate="menu_home"> Home </span>
+                        </a>
+                      </li>
+                      <li class="nav-item active">
+                          <a class="nav-link" href="./MyApplications.html">
+                            <span class="nav-link-icon d-md-none d-lg-inline-block">
+                              <!-- Download SVG icon from http://tabler.io/icons/icon/checkbox -->
+                              <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-file-text" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" /><line x1="9" y1="9" x2="10" y2="9" /><line x1="9" y1="13" x2="15" y2="13" /><line x1="9" y1="17" x2="15" y2="17" /></svg>
+                            </span>
+                            <span class="nav-link-title" data-translate="menu_myresumes"> My Resumes / Application </span>
+                          </a>
+                        </li>
+                        <li class="nav-item">
+                          <a class="nav-link" href="./ResumeBuilder.html">
+                            <span class="nav-link-icon d-md-none d-lg-inline-block">
+                              <!-- Download SVG icon from http://tabler.io/icons/icon/checkbox -->
+                              <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-file-text-ai"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M10 21h-3a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v3.5" /><path d="M9 9h1" /><path d="M9 13h2.5" /><path d="M9 17h1" /><path d="M14 21v-4a2 2 0 1 1 4 0v4" /><path d="M14 19h4" /><path d="M21 15v6" /></svg>
+                            </span>
+                            <span class="nav-link-title" data-translate="menu_Ai_Builder"> Ai Resume Builder </span>
+                          </a>
+                        </li>
+                        <li class="nav-item">
+                          <a class="nav-link" href="./AiCoverLetter.html">
+                            <span class="nav-link-icon d-md-none d-lg-inline-block">
+                              <!-- Download SVG icon from http://tabler.io/icons/icon/checkbox -->
+                              <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-script"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M17 20h-11a3 3 0 0 1 0 -6h11a3 3 0 0 0 0 6h1a3 3 0 0 0 3 -3v-11a2 2 0 0 0 -2 -2h-10a2 2 0 0 0 -2 2v8" /></svg>
+                            </span>
+                            <span class="nav-link-title" data-translate="menu_cover_letter"> Ai Cover Letter </span>
+                          </a>
+                        </li>
+                        <li class="nav-item">
+                          <a class="nav-link" href="./AiJobTrainer.html">
+                            <span class="nav-link-icon d-md-none d-lg-inline-block">
+                              <!-- Download SVG icon from http://tabler.io/icons/icon/checkbox -->
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1">
+                          <path d="M9 11l3 3l8 -8"></path>
+                          <path d="M20 12v6a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h9"></path></svg>
+                            </span>
+                            <span class="nav-link-title" data-translate="menu_parser"> Ai Job Trainer </span>
+                          </a>
+                        </li>
+                        <li class="nav-item">
+                          <a class="nav-link" href="/Settings.html">
+                            <span class="nav-link-icon d-md-none d-lg-inline-block">
+                              <!-- Download SVG icon from http://tabler.io/icons/icon/checkbox -->
+                              <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-settings"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z" /><path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" /></svg>
+                            </span>
+                            <span class="nav-link-title" data-translate="menu_settings"> Settings </span>
+                          </a>
+                        </li>
+                    </ul>
+                    <!-- END NAVBAR MENU -->
+                  </div>
+
+
+
+              <div class="navbar-nav flex-row order-md-last">
+                  <div class="nav-item">
+                      <a  id="dark_mode" class="nav-link px-0 hide-theme-dark" data-bs-toggle="tooltip" data-bs-placement="bottom" aria-label="Enable dark mode" data-bs-original-title="Enable dark mode">
+                        <!-- Download SVG icon from http://tabler.io/icons/icon/moon -->
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1">
+                          <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z"></path>
+                        </svg>
+                      </a>
+                      <a id="light_mode" class="nav-link px-0 hide-theme-light" data-bs-toggle="tooltip" data-bs-placement="bottom" aria-label="Enable light mode" data-bs-original-title="Enable light mode">
+                        <!-- Download SVG icon from http://tabler.io/icons/icon/sun -->
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1">
+                          <path d="M12 12m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0"></path>
+                          <path d="M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7"></path>
+                        </svg>
+                      </a>
+                    </div>
+
+                  <!-- Add other navbar items like User profile if needed -->
+                  <div class="nav-item dropdown">
+                      <a href="#" class="nav-link d-flex lh-1 text-reset p-0" data-bs-toggle="dropdown" aria-label="Open language menu">
+                         <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-language" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 5h7" /><path d="M9 3v2c0 4.418 -2.239 8 -5 8" /><path d="M5 9c-.003 2.144 2.952 3.908 6.7 4" /><path d="M12 20l4 -9l4 9" /><path d="M19.1 18h-6.2" /></svg>
+                      </a>
+                      <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
+                        <a href="#" class="dropdown-item lang-switch" data-lang="en">English</a>
+                        <a href="#" class="dropdown-item lang-switch" data-lang="ar">العربية (Arabic)</a>
+                      </div>
+                    </div>
+              </div>
+
+
+              <div class="collapse navbar-collapse" id="navbar-menu">
+                  <!-- Optional Navbar Links -->
+              </div>
+
+
+          </div>
+      </header>
+        
+
+
+        <!-- Page Body -->
+        <div class="page-wrapper">
+          <!-- BEGIN PAGE HEADER -->
+          <div class="page-header d-print-none">
+            <div class="container-xl">
+              <div class="row g-2 align-items-center">
+                <div class="col">
+                  <h2 class="page-title" data-translate="myapplications_page_title">Search for Applications</h2>
+                </div>
+                <!-- Page title actions -->
+                <div class="col-auto ms-auto d-print-none">
+                    <div class="d-flex gap-2"> <!-- Use gap for spacing -->
+                      <!-- Import Button -->
+                      <button type="button" id="import-single-resume-btn" class="btn btn-outline-primary">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-upload" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2" /><path d="M7 9l5 -5l5 5" /><path d="M12 4l0 12" /></svg>
+                          <span data-translate="myapplications_button_import_single">Import Application</span> 
+                      </button>
+                      <!-- Create New Button -->
+                      <a href="#" id="create-new-resume-btn-header" data-bs-toggle="modal" data-bs-target="#modal-create-resume" class="btn btn-primary"> <!-- Added ID and modal trigger -->
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-2"><path d="M12 5l0 14"></path><path d="M5 12l14 0"></path></svg>
+                        <span data-translate="myapplications_button_create_new">Create New Application</span>
+                      </a>
+                    </div>
+                  </div>
+              </div>
+            </div>
+          </div>
+          <!-- END PAGE HEADER -->
+        </div>
+
+
+
+
+        <div class="page-body">
+          <div class="container-xl">
+              <div class="row g-4">
+                  <div class="col-md-3" >
+                      <!-- Use ID for the form -->
+                      <form id="filter-form" autocomplete="off" novalidate="" class="sticky-top">
+                        <div class="mb-3">
+                          <label class="form-label" data-translate="myresumes_filter_search_label" >Search by Name</label>
+                          <!-- Use ID for search input -->
+                          <input type="search" class="form-control" id="filter-search-name" data-translate="myresumes_filter_search_placeholder" placeholder="Search for name here">
+                          <!-- Search button can trigger form submit, or we listen to input -->
+                          <button type="submit" class="btn btn-primary w-100 mt-2" data-translate="myresumes_filter_search_button"> Search </button>
+                        </div>
+
+                        <h2 class="page-title" data-translate="myresumes_filter_criteria_title">Or Filter By Criteria</h2>
+                        <br>
+
+                        <div class="form-label" data-translate="myresumes_filter_language_label">Language</div>
+                        <div class="mb-4">
+                          <label class="form-check">
+                              <!-- Use ID for language filters -->
+                            <input type="checkbox" class="form-check-input filter-lang" id="filter-lang-en" value="en" checked>
+                            <span class="form-check-label" data-translate="myresumes_filter_lang_en">English</span>
+                          </label>
+                          <label class="form-check">
+                            <input type="checkbox" class="form-check-input filter-lang" id="filter-lang-ar" value="ar" checked> <!-- Check both by default? -->
+                            <span class="form-check-label" data-translate="myresumes_filter_lang_ar">Arabic</span>
+                          </label>
+                        </div>
+                        <!-- Code for filtering based in date 
+                        <div class="form-label" data-translate="myresumes_filter_date_label">Editing Date</div>
+                        <div class="mb-4">
+  
+                          <label class="form-check">
+                            <input type="radio" class="form-check-input filter-date" name="filter_date" value="today">
+                            <span class="form-check-label" data-translate="myresumes_filter_date_today">Today</span>
+                          </label>
+                          <label class="form-check">
+                            <input type="radio" class="form-check-input filter-date" name="filter_date" value="last_week">
+                            <span class="form-check-label" data-translate="myresumes_filter_date_last_week">Last Week</span>
+                          </label>
+                          <label class="form-check">
+                            <input type="radio" class="form-check-input filter-date" name="filter_date" value="this_month">
+                            <span class="form-check-label" data-translate="myresumes_filter_date_this_month">This Month</span>
+                          </label>
+                          <label class="form-check">
+                            <input type="radio" class="form-check-input filter-date" name="filter_date" value="all" checked>
+                            <span class="form-check-label" data-translate="myresumes_filter_date_all_time">All Time</span>
+                          </label>
+                        </div>  -->
+
+                        <div class="mt-5 d-grid gap-2"> <!-- Use d-grid for stacked buttons -->
+                          <button type="submit" class="btn btn-primary" data-translate="myresumes_filter_button_filter">Filter</button>
+                          <!-- Use ID for clear button -->
+                          <button type="button" id="clear-filters-btn" class="btn btn-link" data-translate="myresumes_filter_button_clear"> Clear Filters </button>
+                        </div>
+                      </form>
+                    </div>
+
+                    <div class="col-md-9">
+                      <div class="row row-cards" id="resume-list-container">
+                          <!-- Loading/Resume cards here -->
+                      </div>
+                      <div class="mt-4" id="resume-list-pagination"></div>
+                    </div>
+              </div>
+          </div>
+       </div>  
+
+    </div>
+
+<!-- Inside MyApplications.html -->
+<template id="application-card-template">
+  <div class="col-md-6 application-card-item" data-application-id="">
+      <div class="card">
+          <div class="card-body">
+              <div class="row g-2 align-items-center">
+                  <div class="col-auto">
+                      <span class="avatar avatar-lg avatar-placeholder"></span>
+                  </div>
+                  <div class="col">
+                      <h4 class="card-title m-0 application-name">
+                          <a href="#">Application Name</a>
+                      </h4>
+                      <div class="text-secondary application-role">Job Title / Role</div>
+                      <div class="small mt-1 application-language"><span class="badge"></span></div>
+                      <div class="small text-muted mt-1 application-updated">Updated: -</div>
+                  </div>
+
+                  <!-- START: Updated Edit Dropdown -->
+                  <div class="col-auto dropdown">
+                      <button class="btn dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false" data-translate="myapplications_card_edit_button">
+                          Edit Application
+                      </button>
+                      <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton">
+                          <li>
+                              <a class="dropdown-item edit-app-info-btn" href="#" data-bs-toggle="modal" data-bs-target="#modal-edit-app-info" data-translate="myapplications_dropdown_edit_info">
+                                  <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-info-circle me-1" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" /><path d="M12 9h.01" /><path d="M11 12h1v4h1" /></svg>
+                                  Edit Application Info
+                              </a>
+                          </li>
+                          <li>
+                              <a class="dropdown-item edit-resume-content-btn" href="#" data-translate="myapplications_dropdown_edit_resume">
+                                  <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-file-text me-1" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" /><path d="M9 9h1" /><path d="M9 13h6" /><path d="M9 17h6" /></svg>
+                                  Edit Resume Content
+                              </a>
+                          </li>
+                           <li>
+                              <a class="dropdown-item edit-cover-letter-btn" href="#" data-translate="myapplications_dropdown_edit_cover_letter">
+                                  <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-mail me-1" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 7a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-10z" /><path d="M3 7l9 6l9 -6" /></svg>
+                                  Edit Cover Letter
+                              </a>
+                          </li>
+                           <li>
+                              <a class="dropdown-item edit-job-trainer-btn" href="#" data-translate="myapplications_dropdown_edit_trainer">
+                                  <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-message-chatbot me-1" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 21v-13a3 3 0 0 1 3 -3h10a3 3 0 0 1 3 3v6a3 3 0 0 1 -3 3h-9l-4 4" /><path d="M9.5 9a.5 .5 0 1 0 0 -1a.5 .5 0 0 0 0 1z" /><path d="M14.5 9a.5 .5 0 1 0 0 -1a.5 .5 0 0 0 0 1z" /><path d="M9.5 13a2.5 2.5 0 0 0 5 0" /></svg>
+                                  Edit Job Trainer
+                              </a>
+                          </li>
+                      </ul>
+                  </div>
+                  <!-- END: Updated Edit Dropdown -->
+
+                  <!-- Keep the other dropdown for Duplicate, Export, etc. -->
+                  <div class="col-auto dropdown">
+                      <a href="#" class="btn-action" data-bs-toggle="dropdown" aria-label="More actions">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"></path><path d="M12 19m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"></path><path d="M12 5m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"></path></svg>
+                      </a>
+                      <div class="dropdown-menu dropdown-menu-end">
+                          <a href="#" class="dropdown-item duplicate-application-btn" data-translate="myapplications_card_dropdown_duplicate">Duplicate</a>
+                          <a href="#" class="dropdown-item export-application-btn" data-translate="myapplications_card_dropdown_export">Export JSON</a>
+                          <a href="#" class="dropdown-item download-resume-pdf-btn" data-translate="myapplications_card_dropdown_download_resume">Download Resume PDF</a>
+                          <div class="dropdown-divider"></div>
+                          <a href="#" class="dropdown-item text-danger delete-application-btn" data-translate="myapplications_card_dropdown_delete">Delete</a>
+                      </div>
+                  </div>
+              </div>
+          </div>
+      </div>
+  </div>
+</template>
+<!-- Create New Modal (Rename IDs, Update Labels) -->
+<div class="modal modal-blur fade" id="modal-create-application" tabindex="-1" aria-hidden="true"> <!-- Rename ID -->
+  <div class="modal-dialog modal-dialog-centered" role="document"> <!-- Wider modal? -->
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" data-translate="myapplications_modal_title">Create New Application</h5> <!-- Update Key -->
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+<!-- Inside modal-body in MyApplications.html -->
+<div class="mb-3">
+  <label class="form-label" data-translate="myapplications_modal_label_name">Application Name</label>
+  <input type="text" class="form-control" id="new-application-name" placeholder="e.g., Software Engineer at Google" data-translate="myapplications_modal_placeholder_name">
+</div>
+<div class="mb-3">
+  <label class="form-label" data-translate="myapplications_modal_label_jobdesc">Job Description (Optional)</label>
+  <textarea class="form-control" id="new-application-jobdesc" rows="4" data-translate="myapplications_modal_placeholder_jobdesc"></textarea>
+</div>
+<!-- START: Add Language Selection -->
+<div class="mb-3">
+  <label class="form-label" data-translate="myapplications_modal_label_lang">Language</label>
+  <select class="form-select" id="new-application-language">
+      <option value="en" data-translate="lang_english">English</option>
+      <option value="ar" data-translate="lang_arabic">Arabic</option>
+      <!-- Add other languages if needed -->
+  </select>
+</div>
+<!-- END: Add Language Selection -->
+<div class="text-danger mt-2" id="modal-create-error" style="display: none;"></div>
+         
+        <div class="text-danger mt-2" id="modal-create-error" style="display: none;"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn me-auto" data-bs-dismiss="modal" data-translate="myapplications_modal_button_cancel">Cancel</button> <!-- Update Key -->
+        <button type="button" class="btn btn-primary" id="modal-create-save-btn" data-translate="myapplications_button_create_new">Create Application</button> <!-- Update Key -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Inside MyApplications.html, before closing </body> -->
+<div class="modal modal-blur fade" id="modal-edit-app-info" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered" role="document"> <!-- Added modal-lg -->
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" data-translate="myapplications_edit_modal_title">Edit Application Info</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <!-- Hidden input to store the ID -->
+        <input type="hidden" id="edit-application-id">
+
+        <div class="mb-3">
+          <label class="form-label" data-translate="myapplications_modal_label_name">Application Name</label>
+          <input type="text" class="form-control" id="edit-application-name" data-translate="myapplications_modal_placeholder_name" placeholder="e.g., Software Engineer at Google">
+        </div>
+        <div class="mb-3">
+          <label class="form-label" data-translate="myapplications_modal_label_jobdesc">Job Description</label>
+          <textarea class="form-control" id="edit-application-jobdesc" rows="6" data-translate="myapplications_modal_placeholder_jobdesc"></textarea>
+        </div>
+        <div class="mb-3">
+          <label class="form-label" data-translate="myapplications_modal_label_lang">Language</label>
+          <select class="form-select" id="edit-application-language">
+              <option value="en" data-translate="lang_english">English</option>
+              <option value="ar" data-translate="lang_arabic">Arabic</option>
+              <!-- Add other languages if needed -->
+          </select>
+        </div>
+        <div class="text-danger mt-2" id="modal-edit-error" style="display: none;"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn me-auto" data-bs-dismiss="modal" data-translate="myapplications_modal_button_cancel">Cancel</button>
+        <button type="button" class="btn btn-primary" id="modal-edit-save-btn" data-translate="myapplications_edit_modal_button_save">Save Changes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+    <!-- Hidden File Input for Single Import -->
+    <input type="file" id="single-resume-import-input" accept=".json" style="display: none;" />
+
+
+</body>
+</html>

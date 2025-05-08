@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-translate="navbar_title">AI Resume Builder</title>
+
+    <!-- Tabler CSS -->
+    <link rel="stylesheet" href="./sources/tabler.min.css">
+    <link rel="stylesheet" href="./sources/tabler-icons.min.css">
+    <link rel="stylesheet" href="Gemini.css">
+
+
+<style>
+
+        /* Ensure builder and preview areas behave well */
+        .builder-container .card {
+            /* Adjust height dynamically or set a reasonable min-height */
+             /* height: calc(100vh - 100px); */ /* Avoid fixed height if possible */
+             min-height: 600px; /* Ensure it's tall enough */
+             overflow-y: auto;
+        }
+        .preview-container-wrapper {
+            /* height: calc(100vh - 100px); */ /* Match builder height if fixed */
+             min-height: 600px;
+        }
+        .preview-sticky-content {
+            position: sticky;
+            top: 20px; /* Adjust as needed */
+            /* height: 100%; */ /* Removed fixed height to allow content growth */
+            max-height: calc(100vh - 40px); /* Prevent excessive height */
+            overflow-y: hidden; /* Hide scrollbar on the sticky container itself */
+        }
+        .preview-sticky-content .card {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+             max-height: calc(100vh - 40px); /* Match sticky container max height */
+        }
+        .preview-sticky-content .card-body {
+            flex-grow: 1;
+            overflow-y: auto; /* Allow scrolling within the preview card body */
+            padding: 0; /* Remove padding if preview has its own */
+        }
+        #resume-preview-content {
+           /* Add base styling or rely on template */
+           border: 1px solid #e0e0e0;
+           background: white;
+           box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+           overflow-x: hidden; /* Prevent horizontal scroll in preview */
+           min-height: 500px; /* Ensure preview has some height */
+        }
+         /* Styling for template/download preview in modal */
+       .template-card .card-img-top,
+       .download-option-card .card-img-top { /* Apply to both */
+          height: 150px; /* Adjusted height */
+          object-fit: contain; /* Use contain for resumes */
+          object-position: top;
+          border-bottom: 1px solid rgba(0,0,0,.125);
+          background-color: #f8f9fa; /* Light background for image */
+      }
+      .template-card,
+      .download-option-card { /* Apply to both */
+          cursor: pointer;
+          transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+          position: relative; /* For absolute positioning of the checkmark */
+          display: flex; /* Ensure consistent layout */
+          flex-direction: column;
+          height: 100%; /* Make cards fill column height */
+      }
+      .template-card:hover,
+      .download-option-card:hover { /* Apply to both */
+          transform: translateY(-5px);
+          box-shadow: 0 4px 8px rgba(0,0,0,.1);
+      }
+      .template-selected-icon {
+          position: absolute;
+          top: 10px;
+          right: 10px;
+          color: var(--bs-success); /* Or your preferred checkmark color */
+          background-color: rgba(255, 255, 255, 0.8); /* Optional background for better visibility */
+          border-radius: 50%;
+          padding: 2px;
+          z-index: 1;
+      }
+       .download-option-card .card-body {
+          flex-grow: 1; /* Allow body to grow */
+      }
+       .download-option-card .card-text {
+          font-size: 0.85rem; /* Smaller text for description */
+      }
+      .dynamic-entry { /* Added common class for styling */
+        padding: 1rem;
+        border: 1px solid var(--bs-border-color);
+        border-radius: var(--bs-border-radius);
+        position: relative; /* Needed for absolute positioning of remove button */
+      }
+      .remove-entry-btn {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        z-index: 1;
+      }
+    </style>
+
+    <!-- Tabler Core -->
+    <script src="./sources/tabler.min.js" defer></script>
+    <!-- The dexie Js -->
+    <script src="./sources/dexie.js" defer></script>
+
+      <!-- The html2canvas Js -->
+    <script src="./sources/html2canvas.min.js" defer></script>
+    <!-- The jspdf Js -->
+    <script src="./sources/jspdf.umd.min.js" defer></script>    
+
+    <!-- App Logic -->
+    <script src="/js/config.js" defer></script>
+    <script src="/js/translation.js" defer></script>
+    <script src="/js/dexieApi.js" defer></script>
+    <script src="/js/aiAPI.js" defer></script>
+    <script src="/js/themeAndLanguage.js" defer></script>
+    <!-- Page Specific JS -->
+    <script src="/js/previewTemplates.js" defer></script>
+<!-- ****** MUST BE FIRST ****** -->
+<script src="/js/arabicFonts.js" defer></script>
+    <!-- *** NEW: Load Download PDF Logic *** -->
+    <script src="/js/resumeDownloadPdf.js" defer></script>
+    <script src="/js/resumeBuilder.js" defer></script>
+    <!-- Main JS -->
+    <script src="/js/main.js" defer></script>
+
+</head>
+<body data-bs-theme="light">
+    <div class="page">
+
+        <!-- Navbar -->
+        <header class="navbar navbar-expand-md navbar-light d-print-none ">
+          <div class="container-xl">
+              <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar-menu">
+                  <span class="navbar-toggler-icon"></span>
+              </button>
+
+            <!-- BEGIN NAVBAR LOGO -->
+            <div class="navbar-brand navbar-brand-autodark d-none-navbar-horizontal pe-0 pe-md-3">
+              <a href="./">
+                  <img class="navbar-brand-image" width="40%" height="40%" src="./img/logo.png" alt="Logo">
+              </a>
+            </div>
+            <!-- END NAVBAR LOGO -->
+
+              <div class="collapse navbar-collapse" id="navbar-menu">
+                  <div class="d-flex flex-column flex-md-row flex-fill align-items-stretch align-items-md-center">
+                    <!-- BEGIN NAVBAR MENU -->
+                    <ul class="navbar-nav">
+                      <li class="nav-item">
+                        <a class="nav-link" href="./">
+                          <span class="nav-link-icon d-md-none d-lg-inline-block">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1"><path d="M5 12l-2 0l9 -9l9 9l-2 0"></path><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7"></path><path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6"></path></svg>
+                          </span>
+                          <span class="nav-link-title" data-translate="menu_home"> Home </span>
+                        </a>
+                      </li>
+                      <li class="nav-item">
+                          <a class="nav-link" href="/MyApplications.html">
+                            <span class="nav-link-icon d-md-none d-lg-inline-block">
+                             <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-file-text" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" /><line x1="9" y1="9" x2="10" y2="9" /><line x1="9" y1="13" x2="15" y2="13" /><line x1="9" y1="17" x2="15" y2="17" /></svg>
+                            </span>
+                            <span class="nav-link-title" data-translate="menu_myresumes"> My Resumes / Application </span>
+                          </a>
+                        </li>
+                        <li class="nav-item active"> <!-- Mark as active -->
+                          <a class="nav-link" href="./ResumeBuilder.html">
+                            <span class="nav-link-icon d-md-none d-lg-inline-block">
+                              <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-file-text-ai"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M10 21h-3a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v3.5" /><path d="M9 9h1" /><path d="M9 13h2.5" /><path d="M9 17h1" /><path d="M14 21v-4a2 2 0 1 1 4 0v4" /><path d="M14 19h4" /><path d="M21 15v6" /></svg>
+                            </span>
+                            <span class="nav-link-title" data-translate="menu_Ai_Builder"> Ai Resume Builder </span>
+                          </a>
+                        </li>
+                        <li class="nav-item">
+                          <a class="nav-link" href="./AiCoverLetter.html">
+                            <span class="nav-link-icon d-md-none d-lg-inline-block">
+                              <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-script"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M17 20h-11a3 3 0 0 1 0 -6h11a3 3 0 0 0 0 6h1a3 3 0 0 0 3 -3v-11a2 2 0 0 0 -2 -2h-10a2 2 0 0 0 -2 2v8" /></svg>
+                            </span>
+                            <span class="nav-link-title" data-translate="menu_cover_letter"> Ai Cover Letter </span>
+                          </a>
+                        </li>
+                        <li class="nav-item">
+                          <a class="nav-link" href="./AiJobTrainer.html">
+                            <span class="nav-link-icon d-md-none d-lg-inline-block">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-1"><path d="M9 11l3 3l8 -8"></path><path d="M20 12v6a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h9"></path></svg>
+                            </span>
+                            <span class="nav-link-title" data-translate="menu_parser"> Ai Job Trainer </span>
+                          </a>
+                        </li>
+                        <li class="nav-item">
+                          <a class="nav-link" href="/Settings.html">
+                            <span class="nav-link-icon d-md-none d-lg-inline-block">
+                              <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-settings"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z" /><path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" /></svg>
+                            </span>
+                            <span class="nav-link-title" data-translate="menu_settings"> Settings </span>
+                          </a>
+                        </li>
+                    </ul>
+                    <!-- END NAVBAR MENU -->
+                  </div>
+
+                  <!-- Navbar Right Controls -->
+                  <div class="navbar-nav flex-row order-md-last">
+                      <div class="nav-item d-none d-md-flex me-3"> <!-- Theme Toggle -->
+                           <a href="?theme=dark" id="dark_mode" class="nav-link px-0 hide-theme-dark" data-bs-toggle="tooltip" data-bs-placement="bottom" aria-label="Enable dark mode" data-bs-original-title="Enable dark mode">
+                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z"></path></svg>
+                           </a>
+                           <a href="?theme=light" id="light_mode" class="nav-link px-0 hide-theme-light" data-bs-toggle="tooltip" data-bs-placement="bottom" aria-label="Enable light mode" data-bs-original-title="Enable light mode">
+                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M12 12m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0"></path><path d="M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7"></path></svg>
+                           </a>
+                      </div>
+                       <div class="nav-item dropdown d-none d-md-flex me-3"> <!-- Notifications -->
+                            <!-- ... (notification dropdown - kept as is) ... -->
+                      </div>
+                      <div class="nav-item dropdown"> <!-- Language -->
+                          <a href="#" class="nav-link d-flex lh-1 text-reset p-0" data-bs-toggle="dropdown" aria-label="Open language menu">
+                             <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-language" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 5h7" /><path d="M9 3v2c0 4.418 -2.239 8 -5 8" /><path d="M5 9c-.003 2.144 2.952 3.908 6.7 4" /><path d="M12 20l4 -9l4 9" /><path d="M19.1 18h-6.2" /></svg>
+                          </a>
+                          <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
+                            <a href="#" class="dropdown-item lang-switch" data-lang="en">English</a>
+                            <a href="#" class="dropdown-item lang-switch" data-lang="ar">العربية (Arabic)</a>
+                          </div>
+                      </div>
+                  </div><!-- /.navbar-nav -->
+              </div><!-- /.collapse -->
+          </div><!-- /.container-xl -->
+      </header>
+
+        <!-- Page Body -->
+        <div class="page-wrapper">
+            <div class="page-body">
+                <div class="container-fluid">
+                    <div class="row g-4">
+
+                        <!-- Left Container: Builder Sections -->
+                        <div class="col-lg-7 col-md-6 builder-container">
+                          <div class="card">
+                            <div class="card-header">
+                              <!-- TABS - Updated Structure -->
+                              <ul class="nav nav-tabs card-header-tabs" data-bs-toggle="tabs" role="tablist">
+                                <li class="nav-item" role="presentation"><a href="#tab-personal-info" class="nav-link active" data-bs-toggle="tab" aria-selected="true" role="tab"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-user-circle" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /><path d="M12 10m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" /><path d="M6.168 18.849a4 4 0 0 1 3.832 -2.849h4a4 4 0 0 1 3.834 2.855" /></svg><span data-translate="tab_personal_info">Personal Info</span></a></li>
+                                <li class="nav-item" role="presentation"><a href="#tab-work-experience" class="nav-link" data-bs-toggle="tab" aria-selected="false" role="tab"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-briefcase" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 7m0 2a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v9a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2z" /><path d="M8 7v-2a2 2 0 0 1 2 -2h4a2 2 0 0 1 2 2v2" /><path d="M12 12l0 .01" /><path d="M3 13a20 20 0 0 0 18 0" /></svg><span data-translate="tab_work_experience">Experience</span></a></li>
+                                <li class="nav-item" role="presentation"><a href="#tab-education" class="nav-link" data-bs-toggle="tab" aria-selected="false" role="tab"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-school" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M22 9l-10 -4l-10 4l10 4l10 -4v6" /><path d="M6 10.6v5.4a6 3 0 0 0 12 0v-5.4" /></svg><span data-translate="tab_education">Education</span></a></li>
+                                <li class="nav-item" role="presentation"><a href="#tab-trainings" class="nav-link" data-bs-toggle="tab" aria-selected="false" role="tab"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-certificate" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M15 15l3.35 -3.35a2.4 2.4 0 1 0 -3.4 -3.4l-3.35 3.35" /><path d="M13 17.6l-1.4 -1.4" /><path d="M3 21l3.35 -3.35a2.4 2.4 0 1 0 -3.4 -3.4l-3.35 3.35" /><path d="M7.5 15.8l-1.4 -1.4" /><path d="M15 7l-2 2" /><path d="M7 15l2 -2" /></svg><span data-translate="tab_trainings">Trainings</span></a></li>
+                                <li class="nav-item" role="presentation"><a href="#tab-skills" class="nav-link" data-bs-toggle="tab" aria-selected="false" role="tab"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-tools" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 21h4l13 -13a1.5 1.5 0 0 0 -2 -2l-13 13v4" /><path d="M14.5 5.5l4 4" /><path d="M12 8l-5 5l-4 4l0 0l4 4l5 -5" /><path d="M7 8l-1.5 1.5" /><path d="M16 12l1.5 -1.5" /></svg><span data-translate="tab_skills">Skills</span></a></li>
+                                <li class="nav-item" role="presentation"><a href="#tab-languages" class="nav-link" data-bs-toggle="tab" aria-selected="false" role="tab"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-language" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 5h7" /><path d="M9 3v2c0 4.418 -2.239 8 -5 8" /><path d="M5 9c-.003 2.144 2.952 3.908 6.7 4" /><path d="M12 20l4 -9l4 9" /><path d="M19.1 18h-6.2" /></svg><span data-translate="tab_languages">Languages</span></a></li>
+                            
+                                <li class="nav-item dropdown" role="presentation">
+                                     <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+                                         <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-dots" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /><path d="M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /><path d="M19 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /></svg>
+                                         <span data-translate="tab_other_sections">Other Sections</span>
+                                     </a>
+                                     <div class="dropdown-menu">
+                                        <a href="#tab-projects" class="dropdown-item" data-bs-toggle="tab" role="tab"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-source-code me-2" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14.5 4h2.5a3 3 0 0 1 3 3v10a3 3 0 0 1 -3 3h-10a3 3 0 0 1 -3 -3v-5" /><path d="M6 5l-2 2l2 2" /><path d="M10 9l2 -2l-2 -2" /></svg><span data-translate="tab_projects">Projects</span></a>
+                                        <a href="#tab-certifications" class="dropdown-item" data-bs-toggle="tab" role="tab"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-license me-2" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M15 21h-9a3 3 0 0 1 -3 -3v-1h10v2a2 2 0 0 0 4 0v-14a2 2 0 1 1 2 2h-2m2 -4h-11a3 3 0 0 0 -3 3v11" /><path d="M9 7l4 0" /><path d="M9 11l4 0" /></svg><span data-translate="tab_certifications">Certifications</span></a>
+                                        <a href="#tab-awards" class="dropdown-item" data-bs-toggle="tab" role="tab"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-award me-2" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 9m-6 0a6 6 0 1 0 12 0a6 6 0 1 0 -12 0" /><path d="M12 15l3.4 5.89l1.598 -3.233l3.598 .232l-2.6 -3.76l.2 -3.928l-4.286 -2.078l-4.286 2.078l.2 3.928l-2.6 3.76l3.598 -.233l1.598 3.232l3.4 -5.889z" /></svg><span data-translate="tab_awards">Awards</span></a>
+                                        <a href="#tab-publications" class="dropdown-item" data-bs-toggle="tab" role="tab"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-book me-2" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 19a9 9 0 0 1 9 0a9 9 0 0 1 9 0" /><path d="M3 6a9 9 0 0 1 9 0a9 9 0 0 1 9 0" /><path d="M3 6l0 13" /><path d="M12 6l0 13" /><path d="M21 6l0 13" /></svg><span data-translate="tab_publications">Publications</span></a>
+                                        <a href="#tab-volunteering" class="dropdown-item" data-bs-toggle="tab" role="tab"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-heart-handshake me-2" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M19.5 12.572l-7.5 7.428l-7.5 -7.428a5 5 0 1 1 7.5 -6.566a5 5 0 1 1 7.5 6.572" /><path d="M12 6l-3.293 3.293a1 1 0 0 0 0 1.414l.543 .543c.69 .69 1.8 1.108 2.75 .108c.95 -.999 1.8 .34 2.75 .108l.543 -.543a1 1 0 0 0 0 -1.414l-3.293 -3.293z" /></svg><span data-translate="tab_volunteering">Volunteering</span></a>
+                                        <a href="#tab-interests" class="dropdown-item" data-bs-toggle="tab" role="tab"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-mood-smile me-2" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /><path d="M9 10l.01 0" /><path d="M15 10l.01 0" /><path d="M9.5 15a3.5 3.5 0 0 0 5 0" /></svg><span data-translate="tab_interests">Interests</span></a>
+                                        <a href="#tab-social-media" class="dropdown-item" data-bs-toggle="tab" role="tab"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-share me-2" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" /><path d="M18 6m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" /><path d="M18 18m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" /><path d="M8.7 10.7l6.6 -3.4" /><path d="M8.7 13.3l6.6 3.4" /></svg><span data-translate="tab_social_media">Social Media</span></a>
+                                        <a href="#tab-references" class="dropdown-item" data-bs-toggle="tab" role="tab"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-users me-2" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 7m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" /><path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /><path d="M21 21v-2a4 4 0 0 0 -3 -3.85" /></svg><span data-translate="tab_references">References</span></a>
+                                        <a href="#tab-custom" class="dropdown-item" data-bs-toggle="tab" role="tab"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-plus me-2" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 5l0 14" /><path d="M5 12l14 0" /></svg><span data-translate="tab_custom">Custom</span></a>
+                                     </div>
+                                </li>
+                                <!-- Settings Tab (Moved to end) -->
+                                <li class="nav-item ms-auto" role="presentation"><a href="#tab-settings" class="nav-link" title="Settings" data-bs-toggle="tab" aria-selected="false" role="tab"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-settings" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z" /><path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" /></svg></a></li>
+                              </ul>
+                            </div>
+                            <div class="card-body">
+                              <div class="tab-content">
+
+                                <!-- Personal Information Tab (Keep as is) -->
+                                <div class="tab-pane active show" id="tab-personal-info" role="tabpanel">
+                                    <!-- ... content from previous step ... -->
+                                    <h3 class="card-title mb-4" data-translate="section_personal_info">Personal Information</h3>
+                                    <div class="row">
+                                      <div class="col-md-6">
+                                        <input type="hidden" id="current-resume-id">
+                                        <div class="mb-3">
+                                          <label class="form-label" data-translate="label_name">Full Name</label>
+                                          <input type="text" class="form-control" id="input-name" data-translate="placeholder_name" placeholder="Your Full Name">
+                                        </div>
+                                      </div>
+                                      <div class="col-md-6">
+                                        <div class="mb-3">
+                                          <label class="form-label" data-translate="label_job_title_role">Job Title / Role</label>
+                                          <input type="text" class="form-control" id="input-role" data-translate="placeholder_role" placeholder="Your Target Role">
+                                        </div>
+                                      </div>
+                                    </div>
+ <!-- Ai Summary & Objectives -->
+ <div class="mb-3">
+  <div class="d-flex justify-content-between">
+  <label class="form-label" data-translate="label_objective">
+      Summary / Objective
+  </label>
+  <button type="button" class="btn btn-sm btn-outline-primary ms-2 ai-assist-btn" data-target="input-objective" data-prompt-type="summary">
+    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-sparkles" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M16 18a2 2 0 0 1 2 2a2 2 0 0 1 2 -2a2 2 0 0 1 -2 -2a2 2 0 0 1 -2 2zm0 -12a2 2 0 0 1 2 2a2 2 0 0 1 2 -2a2 2 0 0 1 -2 -2a2 2 0 0 1 -2 2zm-7 12a6 6 0 0 1 6 -6a6 6 0 0 1 -6 -6a6 6 0 0 1 -6 6a6 6 0 0 1 6 6z"></path></svg>
+  <span data-translate="Ai_Assist">Ai Assist</span> 
+</button>
+</div>
+  <textarea class="form-control" rows="4" id="input-objective" data-translate="placeholder_summary" placeholder="Write a brief summary..."></textarea>
+</div>
+
+
+                                    <div class="row">
+                                      <div class="col-md-6">
+                                         <div class="mb-3">
+                                           <label class="form-label" data-translate="label_email">Email</label>
+                                            <input type="email" class="form-control" id="input-email" data-translate="placeholder_email" placeholder="your.email@example.com">
+                                           </div> 
+                                          </div>
+                                          <div class="col-md-6"> 
+                                            <div class="mb-3"> 
+                                              <label class="form-label" data-translate="label_phone">Phone</label> 
+                                              <input type="tel" class="form-control" id="input-phone" data-translate="placeholder_phone" placeholder="+1 (555) 123-4567">
+                                             </div>
+                                             </div>
+                                             <div class="col-md-6"> <div class="mb-3"> 
+                                              <label class="form-label" data-translate="label_location">Location</label>
+                                               <input type="text" class="form-control" id="input-location" data-translate="placeholder_location" placeholder="City, Country"> 
+                                              </div>
+                                             </div>
+                                             <div class="col-md-6"> 
+                                              <div class="mb-3"> 
+                                                <label class="form-label" data-translate="label_website">Website / Portfolio</label>
+                                                 <input type="url" class="form-control" id="input-website" data-translate="placeholder_website" placeholder="yourportfolio.com"> 
+                                                </div> 
+                                              </div>
+                                              <div class="col-md-6"> 
+                                                <div class="mb-3">
+                                                   <label class="form-label" data-translate="label_linkedin">LinkedIn Profile URL</label> 
+                                                   <input type="url" class="form-control" id="input-linkedin" data-translate="placeholder_linkedin" placeholder="linkedin.com/in/yourprofile">
+                                                   </div> 
+                                                  </div>
+                                                  <div class="col-md-6">
+                                                     <div class="mb-3">
+                                                       <label class="form-label" data-translate="label_github">GitHub Profile URL</label>
+                                                        <input type="url" class="form-control" id="input-github" data-translate="placeholder_github" placeholder="github.com/yourusername">
+                                                       </div> 
+                                                      </div>
+                                                    </div>
+                                                    <div class="mb-3" hidden="hidden">
+                                                      <label class="form-label" data-translate="label_upload_photo">Profile Photo (Optional)</label>
+                                                      <input class="form-control" type="file" id="input-photo" accept="image/png, image/jpeg, image/gif">
+                                                      <div id="photo-preview-container" class="mt-2 text-center" style="display: none;">
+                                                        <img src="#" id="profile-photo-preview" alt="Photo Preview" style="max-width: 120px; max-height: 120px; object-fit: cover; border-radius: 50%; margin-bottom: 0.5rem;">
+                                                        <button type="button" id="remove-photo-btn" class="btn btn-sm btn-outline-danger" data-translate="button_remove_photo" style="display: none;">Remove Photo</button>
+                                                      </div>
+                                                    </div>
+
+                                 <!-- Edited Job Description -->
+                                 <div class="mb-3">
+                                  <div class="d-flex justify-content-between">
+                                  <label class="form-label" data-translate="resume_label_associated_job_desc">
+                                     Job Description
+                                  </label>
+                                </div>
+                                  <textarea class="form-control" rows="16" id="display-job-description" data-bs-toggle="autosize" data-translate="resume_text_no_job_desc" placeholder="(No job description provided for this application, please insert job description here)"></textarea>
+                                </div>
+
+                                </div>
+
+
+
+
+                                <!-- Work Experience Tab (Keep as is) -->
+                                <div class="tab-pane" id="tab-work-experience" role="tabpanel">
+                                    <div class="d-flex justify-content-between align-items-center mb-4">
+                                        <h3 class="card-title mb-0" data-translate="section_work_experience">Work Experience</h3>
+                                        <button type="button" class="btn btn-sm btn-outline-primary ai-assist-btn" data-target="work-experience-entries" data-prompt-type="work_experience_all">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-sparkles" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M16 18a2 2 0 0 1 2 2a2 2 0 0 1 2 -2a2 2 0 0 1 -2 -2a2 2 0 0 1 -2 2zm0 -12a2 2 0 0 1 2 2a2 2 0 0 1 2 -2a2 2 0 0 1 -2 -2a2 2 0 0 1 -2 2zm-7 12a6 6 0 0 1 6 -6a6 6 0 0 1 -6 -6a6 6 0 0 1 -6 6a6 6 0 0 1 6 6z"></path></svg>
+                                           <span data-translate="AI_Assist_Work_All_Entries" > AI Assist (All Entries) </span> 
+                                        </button>
+                                    </div>
+                                    <div id="work-experience-entries">
+                                        <!-- Individual work experience entries will be added here by JS -->
+                                        <!-- AI Assist button for individual entries will be added via JS -->
+                                    </div>
+                                    <button type="button" id="add-job-btn" class="btn btn-outline-primary add-entry-btn mt-3"><svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 5l0 14" /><path d="M5 12l14 0" /></svg><span data-translate="button_add_job">Add Job Experience</span></button>
+                                </div>
+
+                                <!-- Education Tab (Keep as is) -->
+                                <div class="tab-pane" id="tab-education" role="tabpanel">
+                                    <h3 class="card-title mb-4" data-translate="section_education">Education</h3>
+                                    <div id="education-entries"></div>
+                                    <button type="button" id="add-school-btn" class="btn btn-outline-primary add-entry-btn"><svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 5l0 14" /><path d="M5 12l14 0" /></svg><span data-translate="button_add_school">Add Education</span></button>
+                                </div>
+
+                                <!-- Trainings Tab *NEW* -->
+                                <div class="tab-pane" id="tab-trainings" role="tabpanel">
+                                    <h3 class="card-title mb-4" data-translate="section_trainings">Trainings & Courses</h3>
+                                    <div id="trainings-entries"></div>
+                                    <button type="button" id="add-training-btn" class="btn btn-outline-primary add-entry-btn"><svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 5l0 14" /><path d="M5 12l14 0" /></svg><span data-translate="button_add_training">Add Training</span></button>
+                                </div>
+
+                                <!-- Skills Tab (Keep as is) -->
+                                <div class="tab-pane" id="tab-skills" role="tabpanel">
+                              
+                                  <div class="d-flex justify-content-between align-items-center mb-4">
+                                      <h3 class="card-title mb-0" data-translate="section_skills">Skills</h3>
+                              
+                                      <button type="button" class="btn btn-sm btn-outline-primary ai-assist-btn" data-target="skills-entries" data-prompt-type="skills_all">
+                                          <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-sparkles" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M16 18a2 2 0 0 1 2 2a2 2 0 0 1 2 -2a2 2 0 0 1 -2 -2a2 2 0 0 1 -2 2zm0 -12a2 2 0 0 1 2 2a2 2 0 0 1 2 -2a2 2 0 0 1 -2 -2a2 2 0 0 1 -2 2zm-7 12a6 6 0 0 1 6 -6a6 6 0 0 1 -6 -6a6 6 0 0 1 -6 6a6 6 0 0 1 6 6z"></path></svg>
+                                          <span data-translate="AI_Assist_Skills_All_Entries" > AI Assist (All Entries) </span> 
+                                        
+                                      </button>
+                                  </div>
+                                    <div id="skills-entries"></div>
+                                     <button type="button" id="add-skill-category-btn" class="btn btn-outline-primary add-entry-btn mt-3">
+                                      <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 5l0 14" /><path d="M5 12l14 0" /></svg>
+                                      <span data-translate="button_add_skill_category">Add Skill Category</span>
+                                    </button>
+
+                                </div>
+
+                                <!-- Languages Tab (Keep as is) -->
+                                <div class="tab-pane" id="tab-languages" role="tabpanel">
+                                    <h3 class="card-title mb-4" data-translate="section_languages">Languages</h3>
+                                    <div id="languages-entries"></div>
+                                     <button type="button" id="add-language-btn" class="btn btn-outline-primary add-entry-btn"><svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 5l0 14" /><path d="M5 12l14 0" /></svg><span data-translate="button_add_language">Add Language</span></button>
+                                </div>
+
+                                <!-- Projects Tab (Moved Content) -->
+                                 <div class="tab-pane" id="tab-projects" role="tabpanel">
+                                     <h3 class="card-title mb-4" data-translate="section_projects">Projects</h3>
+                                     <div id="projects-entries"></div>
+                                     <button type="button" id="add-project-btn" class="btn btn-outline-primary add-entry-btn"><svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 5l0 14" /><path d="M5 12l14 0" /></svg><span data-translate="button_add_project">Add Project</span></button>
+                                 </div>
+
+                                <!-- Certifications Tab *NEW* -->
+                                <div class="tab-pane" id="tab-certifications" role="tabpanel">
+                                    <h3 class="card-title mb-4" data-translate="section_certifications">Certifications</h3>
+                                    <div id="certifications-entries"></div>
+                                    <button type="button" id="add-certification-btn" class="btn btn-outline-primary add-entry-btn"><svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 5l0 14" /><path d="M5 12l14 0" /></svg><span data-translate="button_add_certification">Add Certification</span></button>
+                                </div>
+
+                                <!-- Awards Tab *NEW* -->
+                                <div class="tab-pane" id="tab-awards" role="tabpanel">
+                                    <h3 class="card-title mb-4" data-translate="section_awards">Awards & Recognition</h3>
+                                    <div id="awards-entries"></div>
+                                    <button type="button" id="add-award-btn" class="btn btn-outline-primary add-entry-btn"><svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 5l0 14" /><path d="M5 12l14 0" /></svg><span data-translate="button_add_award">Add Award</span></button>
+                                </div>
+
+                                <!-- Publications Tab *NEW* -->
+                                <div class="tab-pane" id="tab-publications" role="tabpanel">
+                                    <h3 class="card-title mb-4" data-translate="section_publications">Publications</h3>
+                                    <div id="publications-entries"></div>
+                                    <button type="button" id="add-publication-btn" class="btn btn-outline-primary add-entry-btn"><svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 5l0 14" /><path d="M5 12l14 0" /></svg><span data-translate="button_add_publication">Add Publication</span></button>
+                                </div>
+
+                                <!-- Volunteering Tab *NEW* -->
+                                <div class="tab-pane" id="tab-volunteering" role="tabpanel">
+                                    <h3 class="card-title mb-4" data-translate="section_volunteering">Volunteering Experience</h3>
+                                    <div id="volunteering-entries"></div>
+                                    <button type="button" id="add-volunteer-btn" class="btn btn-outline-primary add-entry-btn"><svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 5l0 14" /><path d="M5 12l14 0" /></svg><span data-translate="button_add_volunteer">Add Volunteering</span></button>
+                                </div>
+
+                                <!-- Interests Tab *NEW* -->
+                                <div class="tab-pane" id="tab-interests" role="tabpanel">
+                                    <h3 class="card-title mb-4" data-translate="section_interests">Interests</h3>
+                                    <div id="interests-entries"></div>
+                                    <button type="button" id="add-interest-btn" class="btn btn-outline-primary add-entry-btn"><svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 5l0 14" /><path d="M5 12l14 0" /></svg><span data-translate="button_add_interest">Add Interest</span></button>
+                                </div>
+
+                                <!-- Social Media Tab *NEW* -->
+                                <div class="tab-pane" id="tab-social-media" role="tabpanel">
+                                    <h3 class="card-title mb-4" data-translate="section_social_media">Social Media Profiles</h3>
+                                    <div id="social-media-entries"></div>
+                                    <button type="button" id="add-social-btn" class="btn btn-outline-primary add-entry-btn"><svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 5l0 14" /><path d="M5 12l14 0" /></svg><span data-translate="button_add_social">Add Profile</span></button>
+                                </div>
+
+                                <!-- References Tab *NEW* -->
+                                <div class="tab-pane" id="tab-references" role="tabpanel">
+                                    <h3 class="card-title mb-4" data-translate="section_references">References</h3>
+                                    <div id="references-entries"></div>
+                                    <button type="button" id="add-reference-btn" class="btn btn-outline-primary add-entry-btn"><svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 5l0 14" /><path d="M5 12l14 0" /></svg><span data-translate="button_add_reference">Add Reference</span></button>
+                                </div>
+
+                                <!-- Custom Sections Tab (Moved Content) -->
+                                <div class="tab-pane" id="tab-custom" role="tabpanel">
+                                   <h3 class="card-title mb-4" data-translate="section_custom">Custom Sections</h3>
+                                    <div id="custom-sections-entries"></div>
+                                   <button type="button" id="add-custom-section-btn" class="btn btn-outline-primary add-entry-btn"><svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 5l0 14" /><path d="M5 12l14 0" /></svg><span data-translate="button_add_section">Add Custom Section</span></button>
+                               </div>
+
+                                <!-- Settings Tab (Keep as is) -->
+                                <div class="tab-pane" id="tab-settings" role="tabpanel">
+                                    <h3 class="card-title mb-4" data-translate="section_settings">Resume Settings</h3>
+                                    <div class="row">
+                                      <div class="col-md-6">
+                                        <div class="mb-3">
+                                          <label class="form-label" data-translate="label_theme_color">Theme Color</label>
+                                          <input type="color" class="form-control form-control-color" id="settings-theme-color" value="#206bc4">
+                                        </div>
+                                        <div class="mb-3">
+                                          <label class="form-label" data-translate="label_font_family">Font Family</label>
+                                          <select class="form-select" id="settings-font-family">
+                                            <option value="'Inter', sans-serif">Inter (Default)</option>
+                                            <option value="'Lato', sans-serif">Lato</option>
+                                            <option value="'Roboto', sans-serif">Roboto</option>
+                                            <option value="'Merriweather', serif">Merriweather</option>
+                                            <option value="'Georgia', serif">Georgia</option>
+                                          </select>
+                                        </div>
+                                      </div>
+                                      <div class="col-md-6">
+                                        <div class="mb-3">
+                                          <label class="form-label" data-translate="label_font_size">Font Size</label>
+                                          <select class="form-select" id="settings-font-size">
+                                            <option value="9pt">Compact (9pt)</option>
+                                            <option value="10pt" selected>Standard (10pt)</option>
+                                            <option value="11pt">Large (11pt)</option>
+                                          </select>
+                                        </div>
+                                        <div class="mb-3"><label class="form-label" data-translate="label_document_size">Document Size</label>
+                                          <select class="form-select" id="settings-document-size"><option value="Letter">Letter (US, Canada)</option>
+                                            <option value="A4" selected>A4 (International)</option>
+                                          </select>
+                                        </div>
+                                      </div>
+                                      <div class="col-md-6">
+                                        <div class="mb-3">
+                                          <label class="form-label" data-translate="Application_Language">Resume Language</label>
+                                          <select class="form-select" id="settings-language">
+                                            <option value="en" data-translate="Application_Language_English">English</option>
+                                            <option value="ar" data-translate="Application_Language_Arabic">Arabic</option>
+                                          </select>
+                                        </div>
+
+                                      </div>
+                                    </div>
+                                </div>
+
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Right Container: Preview -->
+                        <div class="col-lg-5 col-md-6 preview-container-wrapper">
+                            <div class="preview-sticky-content">
+                                <div class="card">
+                                    <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                        <h3 class="card-title mb-0" data-translate="preview_title">Preview</h3>
+                                        <div class="btn-list">
+                                            <button id="save-resume-btn" class="btn btn-success btn-sm">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-device-floppy" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6 4h10l4 4v10a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2" /><path d="M12 14m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /><path d="M14 4l0 4l-6 0l0 -4" /></svg>
+                                                <span data-translate="resume_button_save">Save</span>
+                                            </button>
+                                            <button id="change-template-btn" class="btn btn-outline-secondary btn-sm">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-template" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 4m0 1a1 1 0 0 1 1 -1h14a1 1 0 0 1 1 1v2a1 1 0 0 1 -1 1h-14a1 1 0 0 1 -1 -1z" /><path d="M4 12m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" /><path d="M14 12m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" /></svg>
+                                                <span data-translate="button_change_template">Template</span>
+                                            </button>
+                                            <button id="download-resume-btn" class="btn btn-primary btn-sm">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-download" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2" /><path d="M7 11l5 5l5 -5" /><path d="M12 4l0 12" /></svg>
+                                                <span data-translate="button_download">Download</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="card-body"> <!-- Removed p-0 -->
+                                        <div class="resume-preview-wrapper">
+                                            <div id="resume-preview-content">
+                                                <!-- Content dynamically generated by JS -->
+                                                <div class="text-center p-5 text-muted"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-lg mb-3" width="24" height="24" viewBox="0 0 24 24" stroke-width="1" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" /><path d="M9 17h6" /><path d="M9 13h6" /></svg><p data-translate="preview_placeholder_loading">Loading preview...</p></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div><!-- /col-lg-5 -->
+                    </div><!-- /row -->
+                </div><!-- /container-fluid -->
+            </div><!-- /page-body -->
+        </div><!-- /page-wrapper -->
+    </div><!-- /page -->
+
+    <!-- Templates for Dynamic Sections (Keep all templates as previously defined) -->
+    <template id="job-entry-template"> <div class="dynamic-entry job-entry mb-3"> <button type="button" class="btn btn-ghost-danger btn-icon remove-entry-btn" data-translate="button_remove_job" title="Remove Job"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-x" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M18 6l-12 12" /><path d="M6 6l12 12" /></svg></button> <div class="row g-2"> <div class="col-md-6"> <div class="mb-3"> <label class="form-label" data-translate="label_job_title">Job Title</label> <input type="text" class="form-control form-control-sm" data-input="job_title" data-translate="placeholder_job_title" placeholder="Software Developer"> </div> </div> <div class="col-md-6"> <div class="mb-3"> <label class="form-label" data-translate="label_company">Company</label> <input type="text" class="form-control form-control-sm" data-input="company" data-translate="placeholder_company" placeholder="Awesome Inc."> </div> </div> <div class="col-md-6"> <div class="mb-3"> <label class="form-label" data-translate="label_city_state">City, State/Country</label> <input type="text" class="form-control form-control-sm" data-input="job_location" data-translate="placeholder_job_location" placeholder="San Francisco, CA"> </div> </div> <div class="col-md-3"> <div class="mb-3"> <label class="form-label" data-translate="label_start_date">Start Date</label> <input type="text" class="form-control form-control-sm" data-input="start_date" data-translate="placeholder_start_date" placeholder="Month YYYY"> </div> </div> <div class="col-md-3"> <div class="mb-3"> <label class="form-label" data-translate="label_end_date">End Date</label> <input type="text" class="form-control form-control-sm" data-input="end_date" data-translate="placeholder_end_date" placeholder="Month YYYY"> <label class="form-check mt-1 small"> <input type="checkbox" class="form-check-input" data-input="current_job"> <span class="form-check-label" data-translate="label_current_job">I currently work here</span> </label> </div> </div> </div> <div class="mb-3"> <div class="d-flex justify-content-between align-items-center mb-1"> <label class="form-label mb-0" data-translate="label_description">Description / Achievements</label> <button type="button" class="btn btn-sm btn-outline-primary ai-assist-btn" data-prompt-type="work_experience_item" data-target-selector="[data-input='description']"> <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-sparkles" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M16 18a2 2 0 0 1 2 2a2 2 0 0 1 2 -2a2 2 0 0 1 -2 -2a2 2 0 0 1 -2 2zm0 -12a2 2 0 0 1 2 2a2 2 0 0 1 2 -2a2 2 0 0 1 -2 -2a2 2 0 0 1 -2 2zm-7 12a6 6 0 0 1 6 -6a6 6 0 0 1 -6 -6a6 6 0 0 1 -6 6a6 6 0 0 1 6 6z"></path></svg> <span data-translate="Ai_Assist_Work_item" >Ai_Assist</span> </button> </div> <textarea class="form-control form-control-sm" rows="4" data-input="description" data-translate="placeholder_job_desc" placeholder="• Developed feature X..."></textarea> </div> </div> </template>
+    <template id="education-entry-template"> <div class="dynamic-entry education-entry mb-3"><button type="button" class="btn btn-ghost-danger btn-icon remove-entry-btn" data-translate="button_remove_school" title="Remove Education"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-x" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M18 6l-12 12" /><path d="M6 6l12 12" /></svg></button><div class="row g-2"><div class="col-md-6"> <div class="mb-3"> <label class="form-label" data-translate="label_school">Institution Name</label> <input type="text" class="form-control form-control-sm" data-input="school" data-translate="placeholder_school" placeholder="University of Example"> </div> </div><div class="col-md-6"> <div class="mb-3"> <label class="form-label" data-translate="label_degree_major">Degree & Major</label> <input type="text" class="form-control form-control-sm" data-input="degree_major" data-translate="placeholder_degree" placeholder="B.S. in Computer Science"> </div> </div><div class="col-md-6"> <div class="mb-3"> <label class="form-label" data-translate="label_city_state">City, State/Country</label> <input type="text" class="form-control form-control-sm" data-input="edu_location" data-translate="placeholder_job_location" placeholder="City, State"> </div> </div><div class="col-md-2"> <div class="mb-3"> <label class="form-label" data-translate="label_gpa">GPA</label> <input type="text" class="form-control form-control-sm" data-input="gpa" data-translate="placeholder_gpa" placeholder="3.8"> </div> </div><div class="col-md-2"> <div class="mb-3"> <label class="form-label" data-translate="label_edu_start_date">Start Date</label> <input type="text" class="form-control form-control-sm" data-input="edu_start_date" data-translate="placeholder_start_date" placeholder="Month YYYY"> </div> </div><div class="col-md-2"><div class="mb-3"><label class="form-label" data-translate="label_edu_end_date">End Date</label><input type="text" class="form-control form-control-sm" data-input="edu_end_date" data-translate="placeholder_end_date" placeholder="Month YYYY"><label class="form-check mt-1 small"><input type="checkbox" class="form-check-input" data-input="edu_current"><span class="form-check-label" data-translate="label_edu_current">Currently studying</span></label></div></div></div><div class="mb-3"><label class="form-label" data-translate="label_additional_info">Relevant Courses / Honors (Optional)</label><textarea class="form-control form-control-sm" rows="2" data-input="additional_info" data-translate="placeholder_edu_info" placeholder="Relevant coursework, honors..."></textarea></div></div> </template>
+    <template id="project-entry-template"> <div class="dynamic-entry project-entry mb-3"><button type="button" class="btn btn-ghost-danger btn-icon remove-entry-btn" data-translate="button_remove_project" title="Remove Project"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-x" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M18 6l-12 12" /><path d="M6 6l12 12" /></svg></button><div class="row g-2"><div class="col-md-6"> <div class="mb-3"> <label class="form-label" data-translate="label_project_name">Project Name</label> <input type="text" class="form-control form-control-sm" data-input="project_name" data-translate="placeholder_project_name" placeholder="My Awesome Project"> </div> </div><div class="col-md-3"> <div class="mb-3"> <label class="form-label" data-translate="label_project_date">Date / Duration</label> <input type="text" class="form-control form-control-sm" data-input="project_date" data-translate="placeholder_project_date" placeholder="Jan 2023 - Mar 2023"> </div> </div><div class="col-md-3"> <div class="mb-3"> <label class="form-label" data-translate="label_project_link">Project Link (Optional)</label> <input type="url" class="form-control form-control-sm" data-input="project_link" data-translate="placeholder_project_link" placeholder="github.com/..."> </div> </div></div><div class="mb-3"><label class="form-label" data-translate="label_description">Description</label><textarea class="form-control form-control-sm" rows="3" data-input="project_description" data-translate="placeholder_project_desc" placeholder="Describe the project..."></textarea></div></div> </template>
+    <template id="skill-category-template"> <div class="dynamic-entry skill-category-entry mb-3"> <button type="button" class="btn btn-ghost-danger btn-icon remove-entry-btn" data-translate="button_remove_skill_category" title="Remove Category"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-x" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M18 6l-12 12" /><path d="M6 6l12 12" /></svg></button> <div class="mb-3"> <label class="form-label" data-translate="label_skills_category">Category</label> <input type="text" class="form-control form-control-sm" data-input="skills_category" data-translate="placeholder_skills_category" placeholder="e.g., Programming Languages"> </div> <div class="mb-3"> <div class="d-flex justify-content-between align-items-center mb-1"> <label class="form-label mb-0" data-translate="label_skills_list">Skills</label> <button type="button" class="btn btn-sm btn-outline-primary ai-assist-btn" data-prompt-type="skills_item" data-target-selector="[data-input='skills_list']"> <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-sparkles" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M16 18a2 2 0 0 1 2 2a2 2 0 0 1 2 -2a2 2 0 0 1 -2 -2a2 2 0 0 1 -2 2zm0 -12a2 2 0 0 1 2 2a2 2 0 0 1 2 -2a2 2 0 0 1 -2 -2a2 2 0 0 1 -2 2zm-7 12a6 6 0 0 1 6 -6a6 6 0 0 1 -6 -6a6 6 0 0 1 -6 6a6 6 0 0 1 6 6z"></path></svg> <span data-translate="Ai_Assist" > AI Assist  </span> </button> </div> <textarea class="form-control form-control-sm" rows="2" data-input="skills_list" data-translate="placeholder_skills_list" placeholder="Comma-separated skills, e.g., Python, JavaScript"></textarea> <small class="form-hint" data-translate="hint_skills_list">Enter skills separated by commas.</small> </div> </div> </template>
+    <template id="language-entry-template"> <div class="dynamic-entry language-entry mb-3"><button type="button" class="btn btn-ghost-danger btn-icon remove-entry-btn" data-translate="button_remove_language" title="Remove Language"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-x" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M18 6l-12 12" /><path d="M6 6l12 12" /></svg></button><div class="row g-2"><div class="col"><label class="form-label" data-translate="label_language">Language</label><input type="text" class="form-control form-control-sm" data-input="language" data-translate="placeholder_language" placeholder="e.g., Spanish"></div><div class="col"><label class="form-label" data-translate="label_proficiency">Proficiency</label><select class="form-select form-select-sm" data-input="proficiency"><option value="">Select Proficiency</option><option value="Native">Native</option><option value="Fluent">Fluent</option><option value="Conversational">Conversational</option><option value="Basic">Basic</option></select></div></div></div> </template>
+    <template id="custom-section-template"> <div class="dynamic-entry custom-section-entry mb-3"><button type="button" class="btn btn-ghost-danger btn-icon remove-entry-btn" data-translate="button_remove_section" title="Remove Section"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-x" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M18 6l-12 12" /><path d="M6 6l12 12" /></svg></button><div class="mb-3"><label class="form-label" data-translate="label_section_title">Section Title</label><input type="text" class="form-control form-control-sm" data-input="custom_title" data-translate="placeholder_custom_title" placeholder="e.g., Awards, Certifications"></div><div class="mb-3"><label class="form-label" data-translate="label_description">Description</label><textarea class="form-control form-control-sm" rows="3" data-input="custom_description" data-translate="placeholder_custom_content" placeholder="Add content for your custom section..."></textarea></div></div> </template>
+    <template id="training-entry-template"> <div class="dynamic-entry training-entry mb-3"> <button type="button" class="btn btn-ghost-danger btn-icon remove-entry-btn" data-translate="button_remove_training" title="Remove Training"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-x" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M18 6l-12 12" /><path d="M6 6l12 12" /></svg></button> <div class="row g-2"> <div class="col-md-6"> <div class="mb-3"> <label class="form-label" data-translate="label_training_name">Training/Course Name</label> <input type="text" class="form-control form-control-sm" data-input="training_name" data-translate="placeholder_training_name" placeholder="e.g., Advanced JavaScript"> </div> </div> <div class="col-md-3"> <div class="mb-3"> <label class="form-label" data-translate="label_institution">Institution/Provider</label> <input type="text" class="form-control form-control-sm" data-input="institution" data-translate="placeholder_institution" placeholder="e.g., Coursera"> </div> </div> <div class="col-md-3"> <div class="mb-3"> <label class="form-label" data-translate="label_completion_date">Completion Date</label> <input type="text" class="form-control form-control-sm" data-input="completion_date" data-translate="placeholder_completion_date" placeholder="Month YYYY"> </div> </div> </div> <div class="mb-3"> <label class="form-label" data-translate="label_training_description">Description (Optional)</label> <textarea class="form-control form-control-sm" rows="2" data-input="training_description" data-translate="placeholder_training_desc" placeholder="Key skills learned..."></textarea> </div> </div> </template>
+    <template id="social-media-entry-template"> <div class="dynamic-entry social-media-entry mb-3"> <button type="button" class="btn btn-ghost-danger btn-icon remove-entry-btn" data-translate="button_remove_social" title="Remove Profile"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-x" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M18 6l-12 12" /><path d="M6 6l12 12" /></svg></button> <div class="row g-2"> <div class="col-md-4"> <div class="mb-3"> <label class="form-label" data-translate="label_network">Network</label> <input type="text" class="form-control form-control-sm" data-input="network" data-translate="placeholder_network" placeholder="e.g., Twitter, GitHub"> </div> </div> <div class="col-md-4"> <div class="mb-3"> <label class="form-label" data-translate="label_username">Username</label> <input type="text" class="form-control form-control-sm" data-input="username" data-translate="placeholder_username" placeholder="e.g., @username"> </div> </div> <div class="col-md-4"> <div class="mb-3"> <label class="form-label" data-translate="label_profile_url">Profile URL</label> <input type="url" class="form-control form-control-sm" data-input="profile_url" data-translate="placeholder_profile_url" placeholder="https://..."> </div> </div> </div> </div> </template>
+    <template id="award-entry-template"> <div class="dynamic-entry award-entry mb-3"> <button type="button" class="btn btn-ghost-danger btn-icon remove-entry-btn" data-translate="button_remove_award" title="Remove Award"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-x" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M18 6l-12 12" /><path d="M6 6l12 12" /></svg></button> <div class="row g-2"> <div class="col-md-5"> <div class="mb-3"> <label class="form-label" data-translate="label_award_title">Award Title</label> <input type="text" class="form-control form-control-sm" data-input="award_title" data-translate="placeholder_award_title" placeholder="e.g., Employee of the Month"> </div> </div> <div class="col-md-4"> <div class="mb-3"> <label class="form-label" data-translate="label_issuer">Issuer</label> <input type="text" class="form-control form-control-sm" data-input="issuer" data-translate="placeholder_issuer" placeholder="e.g., Company Name"> </div> </div> <div class="col-md-3"> <div class="mb-3"> <label class="form-label" data-translate="label_award_date">Date Received</label> <input type="text" class="form-control form-control-sm" data-input="award_date" data-translate="placeholder_award_date" placeholder="Month YYYY"> </div> </div> </div> <div class="mb-3"> <label class="form-label" data-translate="label_award_description">Description (Optional)</label> <textarea class="form-control form-control-sm" rows="2" data-input="award_description" data-translate="placeholder_award_desc" placeholder="Reason for recognition..."></textarea> </div> </div> </template>
+    <template id="certification-entry-template"> <div class="dynamic-entry certification-entry mb-3"> <button type="button" class="btn btn-ghost-danger btn-icon remove-entry-btn" data-translate="button_remove_certification" title="Remove Certification"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-x" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M18 6l-12 12" /><path d="M6 6l12 12" /></svg></button> <div class="row g-2"> <div class="col-md-6"> <div class="mb-3"> <label class="form-label" data-translate="label_certification_name">Certification Name</label> <input type="text" class="form-control form-control-sm" data-input="certification_name" data-translate="placeholder_certification_name" placeholder="e.g., AWS Certified Developer"> </div> </div> <div class="col-md-6"> <div class="mb-3"> <label class="form-label" data-translate="label_cert_issuer">Issuing Organization</label> <input type="text" class="form-control form-control-sm" data-input="cert_issuer" data-translate="placeholder_cert_issuer" placeholder="e.g., Amazon Web Services"> </div> </div> <div class="col-md-4"> <div class="mb-3"> <label class="form-label" data-translate="label_issue_date">Issue Date</label> <input type="text" class="form-control form-control-sm" data-input="issue_date" data-translate="placeholder_issue_date" placeholder="Month YYYY"> </div> </div> <div class="col-md-4"> <div class="mb-3"> <label class="form-label" data-translate="label_expiration_date">Expiration Date (Optional)</label> <input type="text" class="form-control form-control-sm" data-input="expiration_date" data-translate="placeholder_expiration_date" placeholder="Month YYYY"> </div> </div> <div class="col-md-4"> <div class="mb-3"> <label class="form-label" data-translate="label_credential_url">Credential URL (Optional)</label> <input type="url" class="form-control form-control-sm" data-input="credential_url" data-translate="placeholder_credential_url" placeholder="Link to certificate..."> </div> </div> </div> </div> </template>
+    <template id="interest-entry-template"> <div class="dynamic-entry interest-entry mb-3"> <button type="button" class="btn btn-ghost-danger btn-icon remove-entry-btn" data-translate="button_remove_interest" title="Remove Interest"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-x" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M18 6l-12 12" /><path d="M6 6l12 12" /></svg></button> <div class="mb-3"> <label class="form-label" data-translate="label_interest_name">Interest</label> <input type="text" class="form-control form-control-sm" data-input="interest_name" data-translate="placeholder_interest_name" placeholder="e.g., Photography, Hiking"> <small class="form-hint">Keep it brief or list related interests.</small> </div> </div> </template>
+    <template id="publication-entry-template"> <div class="dynamic-entry publication-entry mb-3"> <button type="button" class="btn btn-ghost-danger btn-icon remove-entry-btn" data-translate="button_remove_publication" title="Remove Publication"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-x" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M18 6l-12 12" /><path d="M6 6l12 12" /></svg></button> <div class="row g-2"> <div class="col-md-12"> <div class="mb-3"> <label class="form-label" data-translate="label_publication_title">Title</label> <input type="text" class="form-control form-control-sm" data-input="publication_title" data-translate="placeholder_publication_title" placeholder="e.g., My Research Paper"> </div> </div> <div class="col-md-6"> <div class="mb-3"> <label class="form-label" data-translate="label_publisher">Publisher / Journal</label> <input type="text" class="form-control form-control-sm" data-input="publisher" data-translate="placeholder_publisher" placeholder="e.g., Journal of Computer Science"> </div> </div> <div class="col-md-3"> <div class="mb-3"> <label class="form-label" data-translate="label_publication_date">Publication Date</label> <input type="text" class="form-control form-control-sm" data-input="publication_date" data-translate="placeholder_publication_date" placeholder="Month YYYY"> </div> </div> <div class="col-md-3"> <div class="mb-3"> <label class="form-label" data-translate="label_publication_url">Publication URL</label> <input type="url" class="form-control form-control-sm" data-input="publication_url" data-translate="placeholder_publication_url" placeholder="DOI or link..."> </div> </div> </div> <div class="mb-3"> <label class="form-label" data-translate="label_publication_description">Summary / Abstract (Optional)</label> <textarea class="form-control form-control-sm" rows="2" data-input="publication_description" data-translate="placeholder_publication_desc" placeholder="Brief summary..."></textarea> </div> </div> </template>
+    <template id="volunteering-entry-template"> <div class="dynamic-entry volunteering-entry mb-3"> <button type="button" class="btn btn-ghost-danger btn-icon remove-entry-btn" data-translate="button_remove_volunteer" title="Remove Volunteering"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-x" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M18 6l-12 12" /><path d="M6 6l12 12" /></svg></button> <div class="row g-2"> <div class="col-md-6"> <div class="mb-3"> <label class="form-label" data-translate="label_role">Role / Position</label> <input type="text" class="form-control form-control-sm" data-input="role" data-translate="placeholder_role" placeholder="e.g., Event Coordinator"> </div> </div> <div class="col-md-6"> <div class="mb-3"> <label class="form-label" data-translate="label_organization">Organization</label> <input type="text" class="form-control form-control-sm" data-input="organization" data-translate="placeholder_organization" placeholder="e.g., Local Charity"> </div> </div> <div class="col-md-6"> <div class="mb-3"> <label class="form-label" data-translate="label_volunteer_location">Location (Optional)</label> <input type="text" class="form-control form-control-sm" data-input="volunteer_location" data-translate="placeholder_volunteer_location" placeholder="City, Country"> </div> </div> <div class="col-md-3"> <div class="mb-3"> <label class="form-label" data-translate="label_volunteer_start_date">Start Date</label> <input type="text" class="form-control form-control-sm" data-input="volunteer_start_date" data-translate="placeholder_volunteer_start_date" placeholder="Month YYYY"> </div> </div> <div class="col-md-3"> <div class="mb-3"> <label class="form-label" data-translate="label_volunteer_end_date">End Date</label> <input type="text" class="form-control form-control-sm" data-input="volunteer_end_date" data-translate="placeholder_volunteer_end_date" placeholder="Month YYYY"> <label class="form-check mt-1 small"> <input type="checkbox" class="form-check-input" data-input="currently_volunteering"> <span class="form-check-label" data-translate="label_currently_volunteering">I currently volunteer here</span> </label> </div> </div> </div> <div class="mb-3"> <label class="form-label" data-translate="label_volunteer_description">Description / Responsibilities</label> <textarea class="form-control form-control-sm" rows="3" data-input="volunteer_description" data-translate="placeholder_volunteer_desc" placeholder="Organized events..."></textarea> </div> </div> </template>
+    <template id="reference-entry-template"> <div class="dynamic-entry reference-entry mb-3"> <button type="button" class="btn btn-ghost-danger btn-icon remove-entry-btn" data-translate="button_remove_reference" title="Remove Reference"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-x" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M18 6l-12 12" /><path d="M6 6l12 12" /></svg></button> <div class="row g-2"> <div class="col-md-6"> <div class="mb-3"> <label class="form-label" data-translate="label_referent_name">Referent's Name</label> <input type="text" class="form-control form-control-sm" data-input="referent_name" data-translate="placeholder_referent_name" placeholder="e.g., Jane Doe"> </div> </div> <div class="col-md-6"> <div class="mb-3"> <label class="form-label" data-translate="label_referent_company">Company & Position</label> <input type="text" class="form-control form-control-sm" data-input="referent_company" data-translate="placeholder_referent_company" placeholder="e.g., CEO at Example Corp"> </div> </div> <div class="col-md-6"> <div class="mb-3"> <label class="form-label" data-translate="label_referent_email">Email</label> <input type="email" class="form-control form-control-sm" data-input="referent_email" data-translate="placeholder_referent_email" placeholder="jane.doe@example.com"> </div> </div> <div class="col-md-6"> <div class="mb-3"> <label class="form-label" data-translate="label_referent_phone">Phone (Optional)</label> <input type="tel" class="form-control form-control-sm" data-input="referent_phone" data-translate="placeholder_referent_phone" placeholder="+1 555 987 6543"> </div> </div> </div> <div class="mb-3"> <label class="form-label" data-translate="label_reference_text">Note / Relationship (Optional)</label> <textarea class="form-control form-control-sm" rows="1" data-input="reference_text" data-translate="placeholder_reference_text" placeholder="e.g., Available upon request / Former Manager"></textarea> </div> </div> </template>
+
+    <!-- Create Application Modal -->
+    <div class="modal modal-blur fade" id="modal-create-application" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+      <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+          <div class="modal-header"> <h5 class="modal-title" data-translate="myapplications_modal_title">Create New Application</h5> </div>
+          <div class="modal-body"> <p class="text-muted" data-translate="resume_modal_create_prompt">Please create a new application to start building your resume.</p> <div class="mb-3"> <label class="form-label" data-translate="myapplications_modal_label_name">Application Name</label> <input type="text" class="form-control" id="new-application-name" placeholder="e.g., Software Engineer at Google" data-translate="myapplications_modal_placeholder_name"> </div> <div class="mb-3"> <label class="form-label" data-translate="myapplications_modal_label_jobdesc">Job Description (Optional)</label> <textarea class="form-control" id="new-application-jobdesc" rows="4" data-translate="myapplications_modal_placeholder_jobdesc"></textarea> </div> <div class="mb-3"> <label class="form-label" data-translate="myapplications_modal_label_lang">Language</label> <select class="form-select" id="new-application-language"> <option value="en" data-translate="lang_english">English</option> <option value="ar" data-translate="lang_arabic">Arabic</option> </select> </div> <div class="text-danger mt-2" id="modal-create-error" style="display: none;"></div> </div>
+          <div class="modal-footer"> <button type="button" class="btn btn-primary" id="modal-create-save-btn" data-translate="myapplications_button_create_new">Create Application</button> </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI Assist Modal -->
+    <div class="modal fade" id="ai-assist-modal" tabindex="-1" aria-labelledby="aiAssistModalLabel" aria-hidden="true"> 
+      <div class="modal-dialog modal-lg modal-dialog-centered"> 
+        <div class="modal-content"> 
+          <div class="modal-header"> 
+            <h5 class="modal-title" id="aiAssistModalLabel" data-translate="ai_assist_modal_title">AI Assistant</h5> 
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+           </div> <div class="modal-body">
+             <div id="ai-assist-error" class="alert alert-danger" style="display: none;" role="alert"></div>
+              <div class="mb-3">
+                 <label for="ai-assist-language" class="form-label" data-translate="ai_assist_modal_language">Generation Language:</label>
+                  <select class="form-select" id="ai-assist-language">
+                     <option value="en">English</option>
+                      <option value="ar">العربية (Arabic)</option> 
+                    </select> 
+                  </div>
+                   <div id="ai-assist-dynamic-content"> 
+
+                    </div>
+                     <div id="ai-assist-single-suggestion" class="mb-3" style="display: none;">
+                       <label for="ai-assist-output" class="form-label" data-translate="ai_assist_modal_suggestion">Suggested Content:</label>
+                        <textarea class="form-control" id="ai-assist-output" rows="10" readonly></textarea> </div> <div id="ai-assist-loading" class="text-center mt-2" style="display: none;"> 
+                          <div class="spinner-border text-primary" role="status">
+
+                          </div> 
+                          <span class="ms-2" data-translate="ai_assist_modal_loading">Generating...</span> 
+                        </div> 
+                        <div id="ai-assist-original-content" class="mb-3 mt-3" style="display: none;"> 
+                          <label class="form-label" data-translate="ai_assist_modal_original">Original Content (for reference):</label>
+                           <textarea class="form-control" id="ai-assist-original" rows="5" readonly style="background-color: var(--bs-tertiary-bg);"></textarea>
+                           </div>
+                           </div>
+                            <div class="modal-footer justify-content-between"> 
+                              <div id="ai-assist-single-actions" style="display: none;"> 
+                                <button type="button" class="btn btn-primary" id="ai-assist-replace-btn" data-translate="ai_assist_modal_replace">Replace</button> 
+                                <button type="button" class="btn btn-secondary" id="ai-assist-add-below-btn" data-translate="ai_assist_modal_add_below">Add Below</button>
+                               </div> 
+                               <div id="ai-assist-all-actions" style="display: none;"> 
+                            </div> <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal" data-translate="ai_assist_modal_close">Close</button> 
+                          </div> 
+                        </div> 
+                      </div>
+                     </div>
+
+
+
+    <template id="ai-work-experience-suggestion-template"> <div class="ai-work-experience-suggestion mb-3 p-3 border rounded"> <h6 class="mb-2"><span data-translate="ai_assist_modal_suggestion_for">Suggestion for</span>: <strong class="job-title">Job Title</strong> <span data-translate="ai_assist_modal_at">at</span> <strong class="company-name">Company</strong></h6> <textarea class="form-control ai-suggestion-output" rows="6" readonly></textarea> <div class="mt-2 text-end"> <button type="button" class="btn btn-sm btn-primary ai-suggestion-replace-btn" data-translate="ai_assist_modal_replace">Replace</button> <button type="button" class="btn btn-sm btn-secondary ai-suggestion-add-below-btn" data-translate="ai_assist_modal_add_below">Add Below</button> </div> </div> </template>
+    <template id="ai-skill-suggestion-template"> <div class="ai-skill-suggestion mb-3 p-3 border rounded"> <h6 class="mb-2"><span data-translate="ai_assist_modal_suggestion_for_cat">Suggestion for Category</span>: <strong class="skill-category-name">Category Name</strong></h6> <label class="form-label small" data-translate="label_suggested_skills">Suggested Skills:</label> <textarea class="form-control ai-suggestion-output" rows="3" readonly></textarea> <div class="mt-2 text-end"> <button type="button" class="btn btn-sm btn-primary ai-suggestion-replace-btn" data-translate="ai_assist_modal_replace" style="display: none;">Replace</button> <button type="button" class="btn btn-sm btn-success ai-suggestion-add-category-btn" data-translate="ai_assist_modal_add_category" style="display: none;">Add Category</button> <button type="button" class="btn btn-sm btn-secondary ai-suggestion-add-below-btn" data-translate="ai_assist_modal_add_below" style="display: none;">Add Below</button> </div> </div> </template>
+
+    <!-- Change Template Modal -->
+    <div class="modal modal-blur fade" id="modal-change-template" tabindex="-1" aria-hidden="true"> <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" role="document"> <div class="modal-content"> <div class="modal-header"> <h5 class="modal-title" data-translate="template_modal_title">Select Resume Template</h5> <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button> </div> <div class="modal-body"> <div class="row row-cards g-3" id="template-selection-container"> <div class="col-md-6"> <div class="card template-card" data-template-id="default"> <img class="card-img-top" src="https://via.placeholder.com/300x150/dee2e6/6c757d?text=Default+Template" alt="Default Template Preview"> <div class="card-body text-center"> <h5 class="card-title" data-translate="template_name_default">Default</h5> <span class="template-selected-icon" style="display: none;"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-circle-check-filled" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M17 3.34a10 10 0 1 1 -14.995 8.984l-.005 -.324l.005 -.324a10 10 0 0 1 14.995 -8.336zm-1.293 5.953a1 1 0 0 0 -1.32 -.083l-.094 .083l-3.293 3.292l-1.293 -1.292l-.094 -.083a1 1 0 0 0 -1.403 1.403l.083 .094l2 2l.094 .083a1 1 0 0 0 1.226 0l.094 -.083l4 -4l.083 -.094a1 1 0 0 0 -.083 -1.32z" stroke-width="0" fill="currentColor" /></svg></span> </div> </div> </div> <div class="col-md-6"> <div class="card template-card" data-template-id="modern"> <img class="card-img-top" src="https://via.placeholder.com/300x150/e9ecef/495057?text=Modern+Template" alt="Modern Template Preview"> <div class="card-body text-center"> <h5 class="card-title" data-translate="template_name_modern">Modern</h5> <span class="template-selected-icon" style="display: none;"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-circle-check-filled" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M17 3.34a10 10 0 1 1 -14.995 8.984l-.005 -.324l.005 -.324a10 10 0 0 1 14.995 -8.336zm-1.293 5.953a1 1 0 0 0 -1.32 -.083l-.094 .083l-3.293 3.292l-1.293 -1.292l-.094 -.083a1 1 0 0 0 -1.403 1.403l.083 .094l2 2l.094 .083a1 1 0 0 0 1.226 0l.094 -.083l4 -4l.083 -.094a1 1 0 0 0 -.083 -1.32z" stroke-width="0" fill="currentColor" /></svg></span> </div> </div> </div> </div> </div> <div class="modal-footer"> <button type="button" class="btn" data-bs-dismiss="modal" data-translate="template_modal_close">Close</button> </div> </div> </div> </div>
+
+    <!-- *** NEW: Download Options Modal for Resume *** -->
+    <div class="modal modal-blur fade" id="modal-download-options-resume" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" role="document">
+          <div class="modal-content">
+              <div class="modal-header">
+                  <h5 class="modal-title" data-translate="download_modal_title_resume">Select Resume Download Format</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body">
+                  <div class="row row-cards g-3" id="download-options-container-resume">
+                      <!-- Option 1: Single Page Native -->
+                      <div class="col-md-6">
+                          <div class="card download-option-card" data-download-type="single-page-native">
+                              <div class="card-body text-center">
+                                 <div class="mb-2"> <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-lg text-muted" width="24" height="24" viewBox="0 0 24 24" stroke-width="1" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" /><path d="M10 12h4" /><path d="M10 16h4" /><path d="M10 8h1" /></svg></div>
+                                  <h5 class="card-title" data-translate="download_option_single_native">Single Page (Text-based)</h5>
+                                  <p class="card-text text-muted" data-translate="download_option_single_native_desc">Fastest generation, best for pure text content. Layout might differ slightly from preview.</p>
+                              </div>
+                          </div>
+                      </div>
+                      <!-- Option 2: Multi Page Native -->
+                      <div class="col-md-6">
+                          <div class="card download-option-card" data-download-type="multi-page-native">
+                             <div class="card-body text-center">
+                                 <div class="mb-2"> <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-lg text-muted" width="24" height="24" viewBox="0 0 24 24" stroke-width="1" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 21v-4a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v4" /><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M5 11v-6a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2h-2.5" /></svg></div>
+                                  <h5 class="card-title" data-translate="download_option_multi_native">Multi-Page A4 (Text-based)</h5>
+                                  <p class="card-text text-muted" data-translate="download_option_multi_native_desc">Fast, text-based generation with standard A4 page breaks. Good for ATS compatibility.</p>
+                              </div>
+                          </div>
+                      </div>
+                       <!-- Option 3: Single Page html2canvas -->
+                      <div class="col-md-6">
+                          <div class="card download-option-card" data-download-type="single-page-html2canvas">
+                               <div class="card-body text-center">
+                                 <div class="mb-2"> <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-lg text-muted" width="24" height="24" viewBox="0 0 24 24" stroke-width="1" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M15 8h.01" /><path d="M12.5 21h-6.5a3 3 0 0 1 -3 -3v-12a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v6.5" /><path d="M3 16l5 -5c.928 -.893 2.072 -.893 3 0l1.5 1.5" /><path d="M14 14l1 -1c.617 -.594 1.328 -.794 2.009 -.598" /><path d="M19 16l-2 3h4l-2 3" /></svg></div>
+                                  <h5 class="card-title" data-translate="download_option_single_image">Single Page (Image-based)</h5>
+                                  <p class="card-text text-muted" data-translate="download_option_single_image_desc">Captures the exact look of the preview. Slower generation, less ATS friendly.</p>
+                              </div>
+                          </div>
+                      </div>
+                      <!-- Option 4: Multi Page html2canvas -->
+                      <div class="col-md-6">
+                          <div class="card download-option-card" data-download-type="multi-page-html2canvas">
+                             <div class="card-body text-center">
+                                 <div class="mb-2"> <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-lg text-muted" width="24" height="24" viewBox="0 0 24 24" stroke-width="1" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M15 8h.01" /><path d="M6 3h12a3 3 0 0 1 3 3v12a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3v-12a3 3 0 0 1 3 -3z" /><path d="M3 16l5 -5c.928 -.893 2.072 -.893 3 0l3 3" /><path d="M14 14l1 -1c.617 -.594 1.328 -.794 2.009 -.598" /></svg></div>
+                                  <h5 class="card-title" data-translate="download_option_multi_image">Multi-Page A4 (Image-based)</h5>
+                                  <p class="card-text text-muted" data-translate="download_option_multi_image_desc">Matches preview appearance with A4 page breaks. Slowest, less ATS friendly.</p>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+              <div class="modal-footer">
+                  <button type="button" class="btn" data-bs-dismiss="modal" data-translate="download_modal_close">Close</button>
+              </div>
+          </div>
+      </div>
+    </div>
+    <!-- ************************************** -->
+
+    <!-- Notification Container -->
+    <div id="notification-container" class="position-fixed top-0 end-0 p-3" style="z-index: 1100"></div>
+    <template id="notification-template">
+      <div class="toast" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="true" data-bs-delay="3000">
+        <div class="toast-header">
+           <span class="toast-icon me-2"></span>
+          <strong class="me-auto toast-title">Notification</strong>
+          <small class="text-muted toast-time">Just now</small>
+          <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body"></div>
+      </div>
+    </template>
+
+</body>
+</html>

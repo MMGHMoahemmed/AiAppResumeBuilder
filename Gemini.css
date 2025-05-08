@@ -1,0 +1,297 @@
+/* Basic layout and sticky preview */
+.page-wrapper {
+    /* Adjust if your navbar height is different */
+    margin-top: 1rem;
+}
+
+.builder-container {
+    /* Ensure it can scroll if content overflows */
+    max-height: calc(100vh - 100px); /* Adjust 100px based on navbar height and margins */
+    overflow-y: auto;
+    padding-right: 15px; /* Add some padding for scrollbar */
+}
+
+.preview-container-wrapper {
+    height: 100%; /* Crucial for sticky to have a reference */
+}
+
+.preview-sticky-content {
+    position: sticky;
+    /* Adjust top based on navbar height + desired gap */
+    top: 80px;
+    height: calc(100vh - 100px); /* Optional: limit height */
+    overflow-y: auto; /* Allow preview controls/content to scroll if needed */
+    padding-bottom: 1rem; /* Ensure space for controls at bottom */
+}
+
+.resume-preview-wrapper { /* New wrapper for border and padding */
+    border: 1px solid #dee2e6; /* Tabler's default border color */
+    padding: 1.5rem;
+    min-height: 400px; /* Example minimum height */
+    background-color: #fff;
+    margin-bottom: 1rem; /* Space before controls */
+    box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05);
+    overflow-wrap: break-word; /* Prevent long text overflowing */
+}
+
+body[data-bs-theme="dark"] .resume-preview-wrapper {
+    background-color: var(--bs-card-bg); /* Use card background in dark mode */
+    border-color: var(--bs-border-color);
+}
+
+/* Simple styling for preview elements (adjust as needed) */
+.resume-preview-wrapper h2 {
+    /* Name */
+    margin-top: 0;
+    margin-bottom: 0.25rem;
+    font-weight: 600; /* Example */
+    /* Theme color will be applied via JS if needed, or use CSS variable */
+    color: var(--bs-primary);
+}
+.resume-preview-wrapper h5 {
+    /* Section Titles */
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 1.25rem; /* More space between sections */
+    margin-bottom: 0.5rem; /* More space after title */
+    border-bottom: 1px solid var(--bs-primary); /* Use theme color */
+    padding-bottom: 0.25rem;
+    color: var(--bs-primary); /* Use theme color */
+}
+.resume-preview-wrapper h6 {
+    /* Job Title, Degree */
+    font-weight: 600;
+    margin-bottom: 0.1rem;
+}
+.resume-preview-wrapper p,
+.resume-preview-wrapper div.small,
+.resume-preview-wrapper ul li {
+    /* General text, descriptions */
+    line-height: 1.5;
+    color: var(--bs-body-color); /* Use theme body color */
+}
+.resume-preview-wrapper a {
+    text-decoration: none;
+}
+.resume-preview-wrapper a:hover {
+    text-decoration: underline;
+}
+.resume-preview-wrapper ul {
+    padding-left: 1.2rem; /* Indent bullet points */
+    margin-bottom: 0.5rem;
+}
+
+
+/* RTL adjustments */
+html[dir="rtl"] .builder-container {
+    padding-right: 0;
+    padding-left: 15px;
+}
+
+html[dir="rtl"] .resume-preview-wrapper h2,
+html[dir="rtl"] .resume-preview-wrapper h5,
+html[dir="rtl"] .resume-preview-wrapper h6,
+html[dir="rtl"] .resume-preview-wrapper p,
+html[dir="rtl"] .resume-preview-wrapper div,
+html[dir="rtl"] .resume-preview-wrapper span,
+html[dir="rtl"] .resume-preview-wrapper li {
+    text-align: right;
+}
+html[dir="rtl"] .resume-preview-wrapper ul {
+    padding-left: 0;
+    padding-right: 1.2rem;
+}
+html[dir="rtl"] .resume-preview-wrapper .small .me-1 { margin-right: 0 !important; margin-left: 0.25rem !important; }
+html[dir="rtl"] .resume-preview-wrapper .small .me-3 { margin-right: 0 !important; margin-left: 1rem !important; }
+html[dir="rtl"] .resume-preview-wrapper .small .ms-1 { margin-left: 0 !important; margin-right: 0.25rem !important; }
+
+
+/* Ensure dropdown opens correctly in RTL */
+html[dir="rtl"] .dropdown-menu-end {
+    left: 0 !important;
+    right: auto !important;
+}
+
+/* Fix potential icon margin issues in RTL */
+html[dir="rtl"] .btn svg,
+html[dir="rtl"] .nav-link svg,
+html[dir="rtl"] .form-check-label svg /* If icons used in labels */
+ {
+    margin-left: 0.5rem;
+    margin-right: 0;
+}
+html[dir="ltr"] .btn svg,
+html[dir="ltr"] .nav-link svg,
+html[dir="ltr"] .form-check-label svg
+ {
+    margin-right: 0.5rem;
+    margin-left: 0;
+}
+/* Ensure icons inside preview spans have correct margin */
+html[dir="rtl"] .resume-preview-wrapper .ti {
+    margin-left: 0.25rem;
+    margin-right: 0;
+}
+html[dir="ltr"] .resume-preview-wrapper .ti {
+     margin-right: 0.25rem;
+     margin-left: 0;
+}
+
+
+/* Hide the dark mode button when the theme is dark */
+body[data-bs-theme="dark"] .hide-theme-dark {
+    display: none !important; /* Use !important if needed */
+}
+
+/* Hide the light mode button when the theme is light */
+body[data-bs-theme="light"] .hide-theme-light {
+    display: none !important; /* Use !important if needed */
+}
+
+/* Ensure the *other* button is visible (adjust display as needed: block, inline-block, flex) */
+body[data-bs-theme="dark"] .hide-theme-light {
+    display: inline-block; /* Or your preferred display type */
+}
+body[data-bs-theme="light"] .hide-theme-dark {
+    display: inline-block; /* Or your preferred display type */
+}
+
+/* Styles for dynamic entries and remove buttons */
+.dynamic-entry {
+    position: relative; /* Needed for absolute positioning of remove button */
+    padding: 1rem;
+    border: 1px dashed #dee2e6; /* Dashed border to indicate it's an entry */
+    margin-bottom: 1rem;
+    border-radius: 4px;
+}
+body[data-bs-theme="dark"] .dynamic-entry {
+    border-color: var(--bs-border-color-translucent);
+}
+
+.remove-entry-btn {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem; /* LTR */
+    z-index: 10;
+}
+html[dir="rtl"] .remove-entry-btn {
+    right: auto;
+    left: 0.5rem;
+}
+
+/* Photo Preview */
+#photo-preview-container {
+    display: none; /* Hidden by default */
+    margin-bottom: 1rem;
+    text-align: center;
+}
+#profile-photo-preview {
+    max-width: 120px;
+    max-height: 120px;
+    object-fit: cover;
+    border-radius: 50%;
+    margin-bottom: 0.5rem;
+}
+#remove-photo-btn {
+    display: none; /* Hidden by default */
+}
+
+/* Adjust tab icons */
+.nav-tabs .nav-link svg {
+    margin-right: 0.25rem; /* LTR */
+}
+html[dir="rtl"] .nav-tabs .nav-link svg {
+    margin-right: 0;
+    margin-left: 0.25rem;
+}
+
+/* --- START: AI Job Trainer Styles --- */
+
+.question-card {
+    border: 1px solid var(--bs-border-color);
+    border-radius: var(--bs-card-border-radius);
+    padding: 1rem;
+    margin-bottom: 1rem;
+    background-color: var(--bs-card-bg);
+    position: relative; /* For potential future absolute elements */
+}
+
+.question-card .question-number {
+    font-weight: bold;
+    color: var(--bs-primary);
+    margin-right: 0.5rem; /* LTR */
+}
+html[dir="rtl"] .question-card .question-number {
+     margin-right: 0;
+     margin-left: 0.5rem;
+}
+
+.question-card .question-text {
+    margin-bottom: 0.75rem;
+    font-weight: 500;
+}
+
+.question-card .answer-content {
+    display: none; /* Hidden by default */
+    margin-top: 0.75rem;
+    padding: 0.75rem;
+    background-color: var(--bs-tertiary-bg); /* Slightly different background */
+    border-radius: var(--bs-border-radius-sm);
+    border: 1px solid var(--bs-border-color);
+    font-size: 0.9em;
+    white-space: pre-wrap; /* Preserve line breaks in the answer */
+}
+
+.question-card .answer-content.answer-visible {
+    display: block; /* Show when class is added */
+}
+
+.question-card .card-actions {
+    margin-top: 1rem;
+    display: flex;
+    gap: 0.5rem; /* Space between buttons */
+}
+
+/* Style for generate more buttons */
+.generate-more-btn {
+    display: none; /* Hidden initially */
+    margin-top: 1rem;
+}
+
+/* Loading state for buttons */
+.btn.loading .spinner-border {
+    width: 1em;
+    height: 1em;
+    border-width: .15em;
+    vertical-align: -0.125em; /* Align better with text */
+}
+.btn.loading .btn-text {
+    margin-left: 0.5rem; /* LTR */
+}
+html[dir="rtl"] .btn.loading .btn-text {
+    margin-left: 0;
+     margin-right: 0.5rem;
+}
+
+/* Simple styling for the job description input area */
+#job-description-input {
+    resize: vertical; /* Allow vertical resize */
+}
+
+.question-card .answer-content {
+    display: none; /* Hidden by default */
+    /* ... other styles ... */
+}
+
+.question-card .answer-content.answer-visible {
+    display: block; /* Show when class is added */
+}
+
+.coverletter_aicoverletter{
+
+    margin-top: 5px;
+}
+/* --- END: AI Job Trainer Styles --- */
+
