@@ -571,8 +571,109 @@ async function renderNativePdfContent(doc, resumeData, baseMargin, pageWidth, pa
         }
     }
 
-    // --- Custom Sections ---
-    renderStandardSection('customSections', 'preview_section_custom', 'More Info', resumeData, 'title', null, null, 'description');
+    // --- *** NEW: Social Media Section *** ---
+    if (resumeData.socialMedia?.length > 0) {
+        drawSectionTitle('preview_section_social_media', 'Social Media'); // Ensure 'preview_section_social_media' is in translations
+        doc.setFontSize(defaultFontSize).setFont(currentFontName, 'normal');
+
+        resumeData.socialMedia.forEach(profile => {
+            if (!profile.network && !profile.username && !profile.url) return; // Skip empty entries
+
+            let profileText = '';
+            if (profile.network) profileText += `${profile.network}: `;
+            if (profile.username) profileText += profile.username;
+            if (profile.url) profileText += ` (${profile.url})`;
+
+            const profileLines = doc.splitTextToSize(profileText.trim(), baseTextSplitWidth);
+            if (checkAddPage(profileLines.length * defaultLineHeight)) {
+                console.log("Page break before social media entry.");
+                return; // Skip if doesn't fit (should be rare for single lines)
+            }
+            profileLines.forEach(line => {
+                doc.text(line, startX, y, { align: textAlign });
+                y += defaultLineHeight;
+            });
+        });
+        y += defaultLineHeight * 0.5; // Space after section
+    }
+
+    // --- *** NEW: References Section *** ---
+    if (resumeData.references?.length > 0) {
+        drawSectionTitle('preview_section_references', 'References'); // Ensure 'preview_section_references' is in translations
+
+        const getRefTertiary = (item) => {
+            let parts = [];
+            if (item.email) parts.push(item.email);
+            if (item.phone) parts.push(item.phone);
+            return parts.join(isRTL ? ' | ' : ' | ');
+        };
+        const defaultRefNote = translations[language]?.references_default_note || 'Available upon request.'; // Ensure 'references_default_note' is in translations
+
+        resumeData.references.forEach(ref => {
+            if (!ref.name && !ref.company) return; // Skip if essential parts are missing
+
+            renderGenericItem(
+                ref.name || '',
+                ref.company || '',
+                getRefTertiary(ref),
+                ref.note || defaultRefNote
+            );
+        });
+        // renderGenericItem adds its own spacing, so no extra y+= needed here unless desired
+    }
+
+
+ // --- Custom Sections ---
+    // MODIFICATION START: Special handling for Custom Sections in single-page native PDF
+    if (resumeData.customSections?.length > 0) {
+        if (!allowMultiPage) { // If it's a single-page native PDF
+            console.log("Rendering Custom Sections with special single-page logic.");
+            drawSectionTitle('preview_section_custom', 'More Info'); // Draw title once
+
+            resumeData.customSections.forEach(section => {
+                // Render the title of the custom section item (if it has one, though your template only has one title field)
+                if (section.title) {
+                    if (checkAddPage(defaultLineHeight * 1.4)) return; // Check space for this sub-title
+                    doc.setFontSize(defaultFontSize).setFont(currentFontName, 'bold');
+                    doc.text(section.title, startX, y, { align: textAlign });
+                    y += defaultLineHeight * 1.4; // Space after sub-title
+                    doc.setFont(currentFontName, 'normal').setFontSize(defaultFontSize); // Reset
+                }
+                
+                // Render description paragraph by paragraph for single page
+                if (section.description) {
+                    doc.setFontSize(descriptionFontSize).setTextColor(50, 50, 50);
+                    const paragraphs = section.description.split('\n');
+                    paragraphs.forEach(paragraph => {
+                        if (!paragraph.trim()) { // Handle empty lines as small gaps
+                            if (checkAddPage(descriptionLineHeight * 0.5)) return;
+                            y += descriptionLineHeight * 0.5;
+                            return;
+                        }
+                        // For each paragraph, split it and render line by line
+                        const splitLines = doc.splitTextToSize(paragraph, baseTextSplitWidth);
+                        splitLines.forEach(line => {
+                            if (checkAddPage(descriptionLineHeight)) { // Check space for EACH line
+                                console.log("Single-page: Ran out of space for custom section line.");
+                                return; // Stop rendering this custom section if space runs out
+                            }
+                            doc.text(line, startX, y, { align: textAlign, maxWidth: baseTextSplitWidth });
+                            y += descriptionLineHeight;
+                        });
+                        if (checkAddPage(descriptionLineHeight * 0.2)) return; // Small gap between paragraphs
+                        y += descriptionLineHeight * 0.2;
+                    });
+                    doc.setFont(currentFontName, 'normal').setFontSize(defaultFontSize).setTextColor(0, 0, 0); // Reset font
+                }
+                if (checkAddPage(defaultLineHeight * 0.7)) return; // Space after custom section item
+                y += defaultLineHeight * 0.7;
+            });
+
+        } else { // For multi-page PDF, use the standard rendering
+            renderStandardSection('customSections', 'preview_section_custom', 'More Info', resumeData, 'title', null, null, 'description');
+        }
+    }
+    // MODIFICATION END
 
     console.log(`Native resume content rendering finished (v1.8 - ${language}). Final Y: ${y.toFixed(2)}`);
 } // End of renderNativePdfContent
@@ -766,15 +867,56 @@ async function calculateNativePdfHeight(resumeData, baseMargin, pageWidth, templ
          y += defaultLineHeight * 0.5; // Space after section
      }
 
-    // 7. Custom Sections
-    y += calculateSectionHeight('customSections', 'preview_section_custom', 'More Info', resumeData.customSections, 'title', null, null, 'description');
+    // --- *** NEW: 7. Social Media Height Calculation *** ---
+    if (resumeData.socialMedia?.length > 0) {
+        y += getSectionTitleHeight('preview_section_social_media', 'Social Media');
+        tempDoc.setFontSize(defaultFontSize).setFont(currentFontName, 'normal');
+        resumeData.socialMedia.forEach(profile => {
+            if (!profile.network && !profile.username && !profile.url) return;
+            let profileText = '';
+            if (profile.network) profileText += `${profile.network}: `;
+            if (profile.username) profileText += profile.username;
+            if (profile.url) profileText += ` (${profile.url})`;
+            y += calculateTextHeight(profileText.trim(), baseTextSplitWidth, defaultFontSize, 'normal', 1.35);
+        });
+        y += defaultLineHeight * 0.5; // Space after section
+    }
+
+    // --- *** NEW: 8. References Height Calculation *** ---
+    if (resumeData.references?.length > 0) {
+        y += getSectionTitleHeight('preview_section_references', 'References');
+        const getRefTertiary = (item) => {
+            let parts = [];
+            if (item.email) parts.push(item.email);
+            if (item.phone) parts.push(item.phone);
+            return parts.join(isRTL ? ' | ' : ' | ');
+        };
+        const defaultRefNote = translations[language]?.references_default_note || 'Available upon request.';
+
+        resumeData.references.forEach(ref => {
+            if (!ref.name && !ref.company) return;
+            y += calculateGenericItemHeight(
+                ref.name || '',
+                ref.company || '',
+                getRefTertiary(ref),
+                ref.note || defaultRefNote
+            );
+        });
+        // calculateGenericItemHeight includes spacing
+    }
+
+       // 9. Custom Sections (Existing)
+       y += calculateSectionHeight('customSections', 'preview_section_custom', 'More Info', resumeData.customSections, 'title', null, null, 'description');
 
 
-    const finalHeight = y + baseMargin; // Add bottom margin
-    console.log(`Resume height calculation (v1.8 - ${language}) complete. Final Y: ${y.toFixed(2)}, Required Height: ${finalHeight.toFixed(2)}`);
-    // Add a slightly larger buffer just in case complex formatting/fonts cause minor variations
-    return finalHeight + 45; // Increased buffer
+       const finalHeight = y + baseMargin; // Add bottom margin
+       console.log(`Resume height calculation (v1.8 - ${language}) complete. Final Y: ${y.toFixed(2)}, Required Height: ${finalHeight.toFixed(2)}`);
+       // Add a slightly larger buffer just in case complex formatting/fonts cause minor variations
+       // return finalHeight + 45; // Original increased buffer
+       return finalHeight + 100; 
 }
+   
+
 
 
 /**
