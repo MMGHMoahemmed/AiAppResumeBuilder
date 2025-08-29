@@ -68,7 +68,7 @@ async function handlePublicKeyUsage(apiKeyUsed) {
         console.error("Dexie helpers not available for handlePublicKeyUsage.");
         return;
     }
-    if (!PUBLIC_GEMINI_API_KEY || PUBLIC_GEMINI_API_KEY === 'AIzaSyDf041XowUVEEwHh36RPcXW76jYK0iwacU') return;
+    if (!PUBLIC_GEMINI_API_KEY || PUBLIC_GEMINI_API_KEY === 'AIzaSyDXtcYZxf7H5bFxo-4pD9xZUr4mIBoCYzY') return;
 
 
     if (apiKeyUsed === PUBLIC_GEMINI_API_KEY) {
@@ -366,4 +366,5 @@ IMPORTANT: Respond ONLY with the full, enhanced cover letter text in ${targetLan
 
 
 // --- END OF FILE aiAPI.js ---
+
 
