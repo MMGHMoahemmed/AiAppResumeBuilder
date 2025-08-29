@@ -99,7 +99,7 @@ async function fetchResumeContentFromAI(promptType, jobDesc, contextData, output
 
 
 
-    const modelName = "gemini-1.5-flash"; // Or your preferred model
+    const modelName = "gemini-2.5-flash"; // Or your preferred model
     const API_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
 
     let prompt = "";
@@ -366,5 +366,6 @@ IMPORTANT: Respond ONLY with the full, enhanced cover letter text in ${targetLan
 
 
 // --- END OF FILE aiAPI.js ---
+
 
 
