@@ -297,7 +297,7 @@ async function handleCreateApplicationFromBuilderModal() {
 
 async function fetchQuestionsFromAI(apiKey, jobDescription, questionType, outputLanguage, count = outputQuestionsNumber.value, existingQuestions = []) {
     console.log(`Fetching ${count} ${questionType} questions via API...`);
-    const modelName = "gemini-1.5-flash"; 
+    const modelName = "gemini-2.5-flash"; 
     const API_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
     let promptInstruction = "";
     let outputFormatInstruction = ""; 
@@ -365,35 +365,71 @@ ${outputFormatInstruction}
         });
 
         if (!response.ok) {
-            let errorData;
-            try { errorData = await response.json(); console.error("API Error Response:", errorData);
-                 if (response.status === 400) { throw new Error(`${translations[currentLang]?.error_api_key_invalid || 'API Key invalid or request error.'} (Status: ${response.status})`); }
-                 else if (response.status === 429) { throw new Error(`${translations[currentLang]?.error_api_quota || 'API Quota Exceeded.'} (Status: ${response.status})`); }
-            } catch (e) { console.error("Failed to parse error response:", e); throw new Error(`${translations[currentLang]?.error_api_generic || 'API Error.'} Status: ${response.status}`); }
-             throw new Error(`${translations[currentLang]?.error_api_generic || 'API Error:'} ${errorData?.error?.message || response.statusText}`);
+            const errorData = await response.json().catch(() => ({ message: response.statusText }));
+            console.error("API Error Data:", errorData);
+            let errorMessage = `Failed API request: ${response.status}`;
+            if (errorData && errorData.error && errorData.error.message) {
+                errorMessage += ` - ${errorData.error.message}`;
+            } else if (errorData && errorData.message) { 
+                errorMessage += ` - ${errorData.message}`;
+            } else {
+                errorMessage += ` - ${response.statusText}`;
+            }
+            throw new Error(errorMessage);
         }
 
         // If the call was successful, handle public key usage increment
         await handlePublicKeyUsage(apiKey); // Pass the key that was actually used
 
-        const responseData = await response.json();
-        if (responseData.candidates?.[0]?.content?.parts?.[0]?.text) {
-            const generatedText = responseData.candidates[0].content.parts[0].text;
-            let jsonString = generatedText;
-            const startIndex = jsonString.indexOf('[');
-            const endIndex = jsonString.lastIndexOf(']');
-            if (startIndex !== -1 && endIndex !== -1 && endIndex > startIndex) { jsonString = jsonString.substring(startIndex, endIndex + 1); }
-            else { console.warn("Could not extract JSON using []. Falling back to regex cleaning."); jsonString = jsonString.replace(/^```json\s*|```$/g, '').trim(); }
+        const data = await response.json();
+        
+        if (!(data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0] && data.candidates[0].content.parts[0].text)) {
+            if (data.promptFeedback && data.promptFeedback.blockReason) {
+                 console.error("Prompt blocked by API:", data.promptFeedback);
+                 let blockDetail = "";
+                 if(data.promptFeedback.safetyRatings && data.promptFeedback.safetyRatings.length > 0){
+                    blockDetail = data.promptFeedback.safetyRatings.map(r => `${r.category}: ${r.probability}`).join(', ');
+                 }
+                 throw new Error(`The prompt was blocked by the API due to "${data.promptFeedback.blockReason}". ${blockDetail ? 'Details: ' + blockDetail : ''}`);
+            }
+            else {
+                console.warn("AI response format not recognized or empty, dumping data:", data);
+                 if (data.error && data.error.message) { 
+                    throw new Error(`Error in API response: ${data.error.message}`);
+                }
+                throw new Error("AI response format not recognized or empty. Check the console for details.");
+            }
+        }
+        const text = data.candidates[0].content.parts[0].text.trim();
+
+
+        if (text) {
+            let generatedText = text.trim();
+            const startIndex = generatedText.indexOf('[');
+            const endIndex = generatedText.lastIndexOf(']');
+            if (startIndex !== -1 && endIndex !== -1 && endIndex > startIndex) {
+                generatedText = generatedText.substring(startIndex, endIndex + 1);
+            } else {
+                console.warn("Could not extract JSON using []. Falling back to regex cleaning.");
+                generatedText = generatedText.replace(/^```json\s*|```$/g, '').trim();
+            }
             
             try {
-                if (!jsonString) { throw new Error("JSON string is empty after extraction/cleaning."); }
-                const parsedQuestions = JSON.parse(jsonString);
+                if (!generatedText) { throw new Error("JSON string is empty after extraction/cleaning."); }
+                const parsedQuestions = JSON.parse(generatedText);
                 if (!Array.isArray(parsedQuestions)) { throw new Error("Response is not JSON array."); }
                 return parsedQuestions;
-            } catch (parseError) { console.error("JSON Parse Error:", parseError, "String:", jsonString); throw new Error(translations[currentLang]?.error_json_parse || 'Failed to parse AI response.'); }
-        } else if (responseData.promptFeedback?.blockReason) { console.error("Prompt blocked:", responseData.promptFeedback); throw new Error(`${translations[currentLang]?.error_api_safety || 'Request blocked by safety filters.'} Reason: ${responseData.promptFeedback.blockReason}`); }
-         else { console.error("Unexpected API response structure:", responseData); throw new Error('Unexpected response structure from API.'); }
-    } catch (error) { console.error("Error during fetchQuestionsFromAI:", error); throw error; }
+            } catch (parseError) {
+                console.error("JSON Parse Error:", parseError, "String:", generatedText);
+                throw new Error(translations[currentLang]?.error_json_parse || 'Failed to parse AI response.');
+            }
+        } else {
+            throw new Error('Unexpected response structure from API.');
+        }
+    } catch (error) {
+        console.error("Error during fetchQuestionsFromAI:", error);
+        throw error;
+    }
 }
 
 function setButtonLoading(button, isLoading) {
