@@ -27,6 +27,8 @@ const generateMoreInterviewBtn = document.getElementById('generate-more-intervie
 // --- ** Delete Buttons ** ---
 const deleteAllWrittenBtn = document.getElementById('delete-all-written-btn');
 const deleteAllInterviewBtn = document.getElementById('delete-all-interview-btn');
+const copyAllWrittenBtn = document.getElementById('copy-all-written-btn');
+const copyAllInterviewBtn = document.getElementById('copy-all-interview-btn');
 
 
 // --- NEW: Modal Elements for Creation ---
@@ -585,6 +587,47 @@ async function handleDeleteAllQuestions(questionType, container, template, gener
     }
 }
 
+// --- Copy All Questions Handler ---
+async function handleCopyAllQuestions(questionType) {
+    if (!currentApplicationId || !currentApplicationData) {
+        showNotification(translations[currentLang]?.trainer_error_no_app || "No application loaded.", 'warning');
+        return;
+    }
+
+    const dataKey = questionType === 'interview' ? 'interview' : 'written';
+    const questions = currentApplicationData.aiTrainerData?.[dataKey] || [];
+
+    if (questions.length === 0) {
+        const notifyMsg = translations[currentLang]?.trainer_notify_no_questions_to_copy || "There are no questions to copy.";
+        showNotification(notifyMsg, 'info');
+        return;
+    }
+
+    let clipboardText = '';
+    questions.forEach((q, index) => {
+        const questionTitle = `${index + 1}. ${q.question}`;
+        const answerLabel = questionType === 'interview' ? (translations[currentLang]?.clipboard_label_sample_answer || "Sample Answer") : (translations[currentLang]?.clipboard_label_solution || "Solution");
+        const answerText = q.sample_answer || q.solution || "Not provided.";
+        const howToLabel = translations[currentLang]?.clipboard_label__to_answer || "How to Answer";
+        const howToText = q.how_to_answer || "Not provided.";
+
+        clipboardText += `${questionTitle}\n\n`;
+        clipboardText += `${answerLabel}:\n${answerText}\n\n`;
+        clipboardText += `${howToLabel}:\n${howToText}\n\n`;
+        clipboardText += '---\n\n';
+    });
+
+    try {
+        await navigator.clipboard.writeText(clipboardText);
+        const successMsg = translations[currentLang]?.trainer_notify_copy_success || "Copied all questions and answers to clipboard!";
+        showNotification(successMsg, 'success');
+    } catch (err) {
+        console.error('Failed to copy text: ', err);
+        const errorMsg = translations[currentLang]?.trainer_notify_copy_failed || "Failed to copy. Please try again.";
+        showNotification(errorMsg, 'danger');
+    }
+}
+
 // --- Delete Single Question Handler ---
 async function handleDeleteSingleQuestion(questionToDelete, questionType, container, template) {
     if (!currentApplicationId || !currentApplicationData || !questionToDelete) {
@@ -675,6 +718,14 @@ function initAiJobTrainer() {
     });
     deleteAllInterviewBtn?.addEventListener('click', () => {
         handleDeleteAllQuestions('interview', interviewQuestionsContainer, questionTemplate, generateMoreInterviewBtn);
+    });
+
+    // --- Copy All Listeners ---
+    copyAllWrittenBtn?.addEventListener('click', () => {
+        handleCopyAllQuestions('written');
+    });
+    copyAllInterviewBtn?.addEventListener('click', () => {
+        handleCopyAllQuestions('interview');
     });
 
     // Initialize tooltips
