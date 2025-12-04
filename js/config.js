@@ -10,7 +10,7 @@
     // IMPORTANT: Replace 'YOUR_REAL_PUBLIC_API_KEY_HERE_REPLACE_ME' with your actual public Gemini API key.
     // SECURE THIS KEY IN GOOGLE CLOUD CONSOLE WITH QUOTAS AND HTTP REFERRER RESTRICTIONS
     // to prevent abuse and unexpected charges. This client-side limit is a soft limit.
-    const PUBLIC_GEMINI_API_KEY = 'AIzaSyDXtcYZxf7H5bFxo-4pD9xZUr4mIBoCYzY';
+    const PUBLIC_GEMINI_API_KEY = 'AIzaSyCl5na7UrgJfn4r-dhw2fvwy7uGWodLA9k';
     const PUBLIC_API_KEY_USAGE_LIMIT = 20; // Max uses for the public key (client-side limit)
     const PUBLIC_API_KEY_USAGE_COUNT_KEY = 'publicApiKeyUsageCount'; // Dexie key for storing the count
 
@@ -18,3 +18,4 @@
     const pageId = document.body.id;
 
 // --- END OF FILE config.js ---
+
