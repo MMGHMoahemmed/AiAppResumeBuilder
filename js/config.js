@@ -18,5 +18,3 @@
     const pageId = document.body.id;
 
 // --- END OF FILE config.js ---
-
-

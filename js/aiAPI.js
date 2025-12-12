@@ -23,7 +23,13 @@ async function getApiKey() {
     }
 
     // 1. Check for user's own API key
-    const userApiKey = await getSetting(GEMINI_API_KEY_STORAGE_KEY);
+    let userApiKey = await getSetting(GEMINI_API_KEY_STORAGE_KEY);
+
+    // Fallback: Check localStorage if not in Dexie
+    if (!userApiKey) {
+        userApiKey = localStorage.getItem(GEMINI_API_KEY_STORAGE_KEY);
+    }
+
     if (userApiKey) {
         console.log("Using user-provided API key.");
         return userApiKey;
@@ -110,31 +116,31 @@ async function fetchResumeContentFromAI(promptType, jobDesc, contextData, output
             prompt = `Based on the following resume information (if provided), write a concise and compelling professional summary/objective (around 3-4 sentences) suitable for a resume. Tailor it towards the job title/role if specified. Focus on key skills and experience and create it according to job description (if specified).\r\n            IMPORTANT: Respond ONLY with the generated summary text itself, Ensure the full response in ${targetLanguageName} again you must make all the words in your response in ${targetLanguageName} even names and acronyms. Do not include any introductory phrases like "Here is a summary:", markdown formatting, or any other extra text. Just the summary.\r\n            Job Title/Role: ${contextData.role || 'Not specified'}\r\n            Key Skills: ${contextData.keySkills || 'Not specified'}\r\n            Experience Highlights: ${contextData.experienceHighlights || 'Not specified'}\r\n            Job Description: ${jobDesc}\r\n            `;
             break;
         case 'work_experience_item':
-             prompt = `Based on the following job title and company, generate 3-5 impactful bullet points for a resume's work experience section. if in English language Focus on action verbs, quantifiable achievements, and relevance to the job description and if in Arabic do not use action verbs insted descripe the duties themselves which means make the generated response objective not subjective. Focus on responsibilities relevant to the title.\r\n                          IMPORTANT: Respond ONLY with the generated bullet points (starting with '*' or '-''), each on a new line, in ${targetLanguageName}. Do not include any introductory phrases, markdown formatting, or any other extra text. Just the bullet points.\r\n             Job Title: ${contextData.jobTitle || 'Not specified'}\r\n             Company: ${contextData.company || 'Not specified'}\r\n             Existing Job duties: ${contextData.existingDescription || 'Not specified'}\r\n             Job Description Keywords/Context: ${jobDesc || ''}\r\n`;
-             break;
+            prompt = `Based on the following job title and company, generate 3-5 impactful bullet points for a resume's work experience section. if in English language Focus on action verbs, quantifiable achievements, and relevance to the job description and if in Arabic do not use action verbs insted descripe the duties themselves which means make the generated response objective not subjective. Focus on responsibilities relevant to the title.\r\n                          IMPORTANT: Respond ONLY with the generated bullet points (starting with '*' or '-''), each on a new line, in ${targetLanguageName}. Do not include any introductory phrases, markdown formatting, or any other extra text. Just the bullet points.\r\n             Job Title: ${contextData.jobTitle || 'Not specified'}\r\n             Company: ${contextData.company || 'Not specified'}\r\n             Existing Job duties: ${contextData.existingDescription || 'Not specified'}\r\n             Job Description Keywords/Context: ${jobDesc || ''}\r\n`;
+            break;
         case 'skills':
             const skills = contextData.existingSkills.map(s => `${s.category}: ${s.skillsList}`).join('\n');
-                prompt = `Based on the following job description and my resume information (if provided), generate or enhance existing skills list for a resume's skills section. Use key words from job description where possible. Focus on skills relevant to job.\r\n                Job Description: ${jobDesc}\r\n                Existing Skills: ${skills || 'Not specified'}\r\n                IMPORTANT: Respond ONLY with the generated skills, each followed by comma and space, in ${targetLanguageName}. Do not include any introductory phrases, markdown formatting, or any other extra text. Just the skills.`;
-                break;
-                // --- MODIFIED/RENAMED CASE for all skills ---
-                case 'skills_all':
-                    const allSkills = contextData.existingSkills || [];
-                    const allSkillsString = allSkills.map((s, index) => `\r\n        Entry ${index + 1}:\r\n        Category: ${s.category || 'N/A'}\r\n        Existing Skills: ${s.skillsList || 'N/A'}\r\n        `).join('\n');
-        
-                    prompt = `You are an AI assistant helping to enhance resume skills sections. Based on the following skill entries and the overall job description, generate enhanced comma-separated skill lists for EACH category. Suggest a category name if one isn't provided or could be improved. Focus on skills relevant to the job description.\r\n        \r\n        Job Description Context:\r\n        ${jobDesc || 'Not provided'}\r\n        \r\n        Skill Entries:\r\n        ---\r\n        ${allSkillsString}\r\n        ---\r\n        \r\n        IMPORTANT: Respond ONLY with a valid JSON array. Each object in the array should correspond to one of the input entries (or a logical grouping) and have the following structure:\r\n        {\r\n          "category": "The original or AI-suggested category name",\r\n          "enhancedSkillsList": "The comma-separated list of enhanced/generated skills for this category in ${targetLanguageName}"\r\n        }\r\n        Do not include any introductory text, explanations, or markdown formatting outside the JSON structure. Ensure the output is a single, valid JSON array.`;
-                    break; // Added break
-        
-                 // --- NEW CASE for single skill item ---
-                 case 'skills_item':
-                     prompt = `You are an AI assistant helping to enhance resume skills. Based on the following skill category, existing skills, and the job description, generate an enhanced comma-separated list of skills relevant to the job.\r\n        \r\n        Job Description Context:\r\n        ${jobDesc || 'Not provided'}\r\n        \r\n        Category: ${contextData.categoryName || 'N/A'}\r\n        Existing Skills: ${contextData.existingSkills || 'N/A'}\r\n        \r\n        IMPORTANT: Respond ONLY with the enhanced comma-separated list of skills itself, in ${targetLanguageName}. Do not include the category name, any introductory phrases, markdown formatting, or any other extra text. Just the skills list.`;
-                     break;        
-        case 'work_experience_all':
-             // Prepare the work experience data for the prompt
-             const workExperiences = contextData.workExperiences || [];
-             const workExpString = workExperiences.map((exp, index) => `\r\nEntry ${index + 1}:\r\nJob Title: ${exp.jobTitle || 'N/A'}\r\nCompany: ${exp.company || 'N/A'}\r\nExisting Description: ${exp.description || 'N/A'}\r\n`).join('\n');
+            prompt = `Based on the following job description and my resume information (if provided), generate or enhance existing skills list for a resume's skills section. Use key words from job description where possible. Focus on skills relevant to job.\r\n                Job Description: ${jobDesc}\r\n                Existing Skills: ${skills || 'Not specified'}\r\n                IMPORTANT: Respond ONLY with the generated skills, each followed by comma and space, in ${targetLanguageName}. Do not include any introductory phrases, markdown formatting, or any other extra text. Just the skills.`;
+            break;
+        // --- MODIFIED/RENAMED CASE for all skills ---
+        case 'skills_all':
+            const allSkills = contextData.existingSkills || [];
+            const allSkillsString = allSkills.map((s, index) => `\r\n        Entry ${index + 1}:\r\n        Category: ${s.category || 'N/A'}\r\n        Existing Skills: ${s.skillsList || 'N/A'}\r\n        `).join('\n');
 
-             prompt = `You are an AI assistant helping to enhance resume work experience descriptions. Based on the following work experience entries and the overall job description (if provided), generate enhanced bullet-point descriptions for EACH entry. IF THERE IS NO EXISTING WORK DESCRIPTION / DUTIES FOR A JOB ENTRY GENERATE BASED IN THE JOB TITLE AND COMPANY NAME. Focus on action verbs, quantifiable achievements, and relevance to the job description if in Arabic do not use action verbs insted descripe the duties themselves which means make the generated response objective not subjective.\r\n\r\nJob Description Context:\r\n${jobDesc || 'Not provided'}\r\n\r\nWork Experience Entries:\r\n---\r\n${workExpString}\r\n---\r\n\r\nIMPORTANT: Respond ONLY with a valid JSON array. Each object in the array should correspond to one of the input entries and have the following structure:\r\n{\r\n  "jobTitle": "The original job title provided",\r\n  "company": "The original company name provided",\r\n  "enhancedDescription": "Only The newly generated bullet points (3-5 points, starting with '*' or '-''), each on a new line) for this specific job in ${targetLanguageName}"\r\n}\r\nDo not include any introductory text, explanations, or markdown formatting outside the JSON structure. Ensure the output is a single, valid JSON array.`;
-             break;
+            prompt = `You are an AI assistant helping to enhance resume skills sections. Based on the following skill entries and the overall job description, generate enhanced comma-separated skill lists for EACH category. Suggest a category name if one isn't provided or could be improved. Focus on skills relevant to the job description.\r\n        \r\n        Job Description Context:\r\n        ${jobDesc || 'Not provided'}\r\n        \r\n        Skill Entries:\r\n        ---\r\n        ${allSkillsString}\r\n        ---\r\n        \r\n        IMPORTANT: Respond ONLY with a valid JSON array. Each object in the array should correspond to one of the input entries (or a logical grouping) and have the following structure:\r\n        {\r\n          "category": "The original or AI-suggested category name",\r\n          "enhancedSkillsList": "The comma-separated list of enhanced/generated skills for this category in ${targetLanguageName}"\r\n        }\r\n        Do not include any introductory text, explanations, or markdown formatting outside the JSON structure. Ensure the output is a single, valid JSON array.`;
+            break; // Added break
+
+        // --- NEW CASE for single skill item ---
+        case 'skills_item':
+            prompt = `You are an AI assistant helping to enhance resume skills. Based on the following skill category, existing skills, and the job description, generate an enhanced comma-separated list of skills relevant to the job.\r\n        \r\n        Job Description Context:\r\n        ${jobDesc || 'Not provided'}\r\n        \r\n        Category: ${contextData.categoryName || 'N/A'}\r\n        Existing Skills: ${contextData.existingSkills || 'N/A'}\r\n        \r\n        IMPORTANT: Respond ONLY with the enhanced comma-separated list of skills itself, in ${targetLanguageName}. Do not include the category name, any introductory phrases, markdown formatting, or any other extra text. Just the skills list.`;
+            break;
+        case 'work_experience_all':
+            // Prepare the work experience data for the prompt
+            const workExperiences = contextData.workExperiences || [];
+            const workExpString = workExperiences.map((exp, index) => `\r\nEntry ${index + 1}:\r\nJob Title: ${exp.jobTitle || 'N/A'}\r\nCompany: ${exp.company || 'N/A'}\r\nExisting Description: ${exp.description || 'N/A'}\r\n`).join('\n');
+
+            prompt = `You are an AI assistant helping to enhance resume work experience descriptions. Based on the following work experience entries and the overall job description (if provided), generate enhanced bullet-point descriptions for EACH entry. IF THERE IS NO EXISTING WORK DESCRIPTION / DUTIES FOR A JOB ENTRY GENERATE BASED IN THE JOB TITLE AND COMPANY NAME. Focus on action verbs, quantifiable achievements, and relevance to the job description if in Arabic do not use action verbs insted descripe the duties themselves which means make the generated response objective not subjective.\r\n\r\nJob Description Context:\r\n${jobDesc || 'Not provided'}\r\n\r\nWork Experience Entries:\r\n---\r\n${workExpString}\r\n---\r\n\r\nIMPORTANT: Respond ONLY with a valid JSON array. Each object in the array should correspond to one of the input entries and have the following structure:\r\n{\r\n  "jobTitle": "The original job title provided",\r\n  "company": "The original company name provided",\r\n  "enhancedDescription": "Only The newly generated bullet points (3-5 points, starting with '*' or '-''), each on a new line) for this specific job in ${targetLanguageName}"\r\n}\r\nDo not include any introductory text, explanations, or markdown formatting outside the JSON structure. Ensure the output is a single, valid JSON array.`;
+            break;
         // Add more cases for other AI features (e.g., 'skills_suggestion')
         default:
             throw new Error(`Invalid prompt type requested: ${promptType}`);
@@ -143,13 +149,13 @@ async function fetchResumeContentFromAI(promptType, jobDesc, contextData, output
     console.log("Sending Prompt:", prompt);
 
     const geminiRequestBody = {
-        "contents": [{"parts": [{"text": prompt}]}],
+        "contents": [{ "parts": [{ "text": prompt }] }],
         "generationConfig": {
-          "temperature": 0.6,
-          "maxOutputTokens": 8192, 
-          "candidateCount": 1
+            "temperature": 0.6,
+            "maxOutputTokens": 8192,
+            "candidateCount": 1
         },
-      };
+    };
 
     try {
         const response = await fetch(`${AI_API_ENDPOINT}?key=${apiKey}`, {
@@ -166,26 +172,26 @@ async function fetchResumeContentFromAI(promptType, jobDesc, contextData, output
             let errorMessage = `Failed API request: ${response.status}`;
             if (errorData && errorData.error && errorData.error.message) {
                 errorMessage += ` - ${errorData.error.message}`;
-            } else if (errorData && errorData.message) { 
+            } else if (errorData && errorData.message) {
                 errorMessage += ` - ${errorData.message}`;
             }
             throw new Error(errorMessage);
         }
 
         const data = await response.json();
-        
+
         if (!(data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0] && data.candidates[0].content.parts[0].text)) {
             if (data.promptFeedback && data.promptFeedback.blockReason) {
-                 console.error("Prompt blocked by API:", data.promptFeedback);
-                 let blockDetail = "";
-                 if(data.promptFeedback.safetyRatings && data.promptFeedback.safetyRatings.length > 0){
+                console.error("Prompt blocked by API:", data.promptFeedback);
+                let blockDetail = "";
+                if (data.promptFeedback.safetyRatings && data.promptFeedback.safetyRatings.length > 0) {
                     blockDetail = data.promptFeedback.safetyRatings.map(r => `${r.category}: ${r.probability}`).join(', ');
-                 }
-                 throw new Error(`The prompt was blocked by the API due to "${data.promptFeedback.blockReason}". ${blockDetail ? 'Details: ' + blockDetail : ''}`);
+                }
+                throw new Error(`The prompt was blocked by the API due to "${data.promptFeedback.blockReason}". ${blockDetail ? 'Details: ' + blockDetail : ''}`);
             }
             else {
                 console.warn("AI response format not recognized or empty, dumping data:", data);
-                 if (data.error && data.error.message) { 
+                if (data.error && data.error.message) {
                     throw new Error(`Error in API response: ${data.error.message}`);
                 }
                 throw new Error("AI response format not recognized or empty. Check the console for details.");
@@ -199,42 +205,42 @@ async function fetchResumeContentFromAI(promptType, jobDesc, contextData, output
 
         console.log("AI Content Response:", text);
 
-         if (text) {
-             let generatedText = text.trim();
+        if (text) {
+            let generatedText = text.trim();
 
-             // Attempt to parse JSON if promptType expects it
-             if (promptType === 'work_experience_all' || promptType === 'skills_all') {
-                 console.log("Attempting to parse work_experience_all response:", generatedText); // Debug log
-                 try {
-                     // Clean up potential markdown code blocks around JSON more robustly
-                     const jsonMatch = generatedText.match(/```json\s*([\s\S]*?)\s*```/i);
-                     let jsonString = generatedText;
-                     if (jsonMatch && jsonMatch[1]) {
-                         jsonString = jsonMatch[1];
-                     } else {
-                         // Fallback: remove potential leading/trailing ``` if no explicit ```json block found
-                         jsonString = generatedText.replace(/^```\s*/, '').replace(/```\s*$/, '');
-                     }
-                     
-                     // Attempt to parse the cleaned string
-                     const parsedJson = JSON.parse(jsonString);
-                     console.log("Successfully parsed JSON:", parsedJson); // Debug log
-                     return parsedJson; // Return the parsed JSON array
-                 } catch (jsonError) {
-                     console.error("Failed to parse AI response as JSON. Raw text:", generatedText, "Error:", jsonError);
-                     // Provide more context in the error
-                     throw new Error(`AI returned invalid JSON format. Error: ${jsonError.message}. Raw response: ${generatedText.substring(0, 100)}...`);
-                 }
-             }
+            // Attempt to parse JSON if promptType expects it
+            if (promptType === 'work_experience_all' || promptType === 'skills_all') {
+                console.log("Attempting to parse work_experience_all response:", generatedText); // Debug log
+                try {
+                    // Clean up potential markdown code blocks around JSON more robustly
+                    const jsonMatch = generatedText.match(/```json\s*([\s\S]*?)\s*```/i);
+                    let jsonString = generatedText;
+                    if (jsonMatch && jsonMatch[1]) {
+                        jsonString = jsonMatch[1];
+                    } else {
+                        // Fallback: remove potential leading/trailing ``` if no explicit ```json block found
+                        jsonString = generatedText.replace(/^```\s*/, '').replace(/```\s*$/, '');
+                    }
 
-             // For other prompt types, return the raw text
-             return generatedText; // Return the generated text
-         } else {
-             throw new Error('Unexpected response structure from AI content generation.');
-         }
+                    // Attempt to parse the cleaned string
+                    const parsedJson = JSON.parse(jsonString);
+                    console.log("Successfully parsed JSON:", parsedJson); // Debug log
+                    return parsedJson; // Return the parsed JSON array
+                } catch (jsonError) {
+                    console.error("Failed to parse AI response as JSON. Raw text:", generatedText, "Error:", jsonError);
+                    // Provide more context in the error
+                    throw new Error(`AI returned invalid JSON format. Error: ${jsonError.message}. Raw response: ${generatedText.substring(0, 100)}...`);
+                }
+            }
+
+            // For other prompt types, return the raw text
+            return generatedText; // Return the generated text
+        } else {
+            throw new Error('Unexpected response structure from AI content generation.');
+        }
     } catch (error) {
-         console.error("Error fetching AI content:", error);
-         throw error; // Re-throw for the caller to handle
+        console.error("Error fetching AI content:", error);
+        throw error; // Re-throw for the caller to handle
     }
 }
 
@@ -274,13 +280,13 @@ async function fetchCoverLetterFromAI(action, jobDesc, company, hiringManager, e
     console.log("Sending Cover Letter Prompt:", prompt);
 
     const geminiRequestBody = {
-        "contents": [{"parts": [{"text": prompt}]}],
+        "contents": [{ "parts": [{ "text": prompt }] }],
         "generationConfig": {
-          "temperature": 0.6,
-          "maxOutputTokens": 8192, 
-          "candidateCount": 1
+            "temperature": 0.6,
+            "maxOutputTokens": 8192,
+            "candidateCount": 1
         }
-      };
+    };
 
     try {
         const response = await fetch(`${AI_API_ENDPOINT}?key=${apiKey}`, {
@@ -297,7 +303,7 @@ async function fetchCoverLetterFromAI(action, jobDesc, company, hiringManager, e
             let errorMessage = `Failed API request: ${response.status}`;
             if (errorData && errorData.error && errorData.error.message) {
                 errorMessage += ` - ${errorData.error.message}`;
-            } else if (errorData && errorData.message) { 
+            } else if (errorData && errorData.message) {
                 errorMessage += ` - ${errorData.message}`;
             }
             throw new Error(errorMessage);
@@ -307,16 +313,16 @@ async function fetchCoverLetterFromAI(action, jobDesc, company, hiringManager, e
 
         if (!(data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0] && data.candidates[0].content.parts[0].text)) {
             if (data.promptFeedback && data.promptFeedback.blockReason) {
-                 console.error("Prompt blocked by API:", data.promptFeedback);
-                 let blockDetail = "";
-                 if(data.promptFeedback.safetyRatings && data.promptFeedback.safetyRatings.length > 0){
+                console.error("Prompt blocked by API:", data.promptFeedback);
+                let blockDetail = "";
+                if (data.promptFeedback.safetyRatings && data.promptFeedback.safetyRatings.length > 0) {
                     blockDetail = data.promptFeedback.safetyRatings.map(r => `${r.category}: ${r.probability}`).join(', ');
-                 }
-                 throw new Error(`The prompt was blocked by the API due to "${data.promptFeedback.blockReason}". ${blockDetail ? 'Details: ' + blockDetail : ''}`);
+                }
+                throw new Error(`The prompt was blocked by the API due to "${data.promptFeedback.blockReason}". ${blockDetail ? 'Details: ' + blockDetail : ''}`);
             }
             else {
                 console.warn("AI response format not recognized or empty, dumping data:", data);
-                 if (data.error && data.error.message) { 
+                if (data.error && data.error.message) {
                     throw new Error(`Error in API response: ${data.error.message}`);
                 }
                 throw new Error("AI response format not recognized or empty. Check the console for details.");
@@ -330,10 +336,10 @@ async function fetchCoverLetterFromAI(action, jobDesc, company, hiringManager, e
         console.log("AI Cover Letter Response:", text);
 
         if (text) {
-             // Clean up potential AI artifacts like "```" or markdown headers if they sneak in
-             let generatedText = text.trim();
-             generatedText = generatedText.replace(/^```(text|markdown)?\s*/i, '').replace(/```\s*$/, ''); // Remove code block fences
-             return generatedText;
+            // Clean up potential AI artifacts like "```" or markdown headers if they sneak in
+            let generatedText = text.trim();
+            generatedText = generatedText.replace(/^```(text|markdown)?\s*/i, '').replace(/```\s*$/, ''); // Remove code block fences
+            return generatedText;
         } else {
             throw new Error('Unexpected response structure from AI cover letter generation.');
         }
